@@ -20,6 +20,9 @@ public static class Games
 #if GAME_KINGBEE
         yield return new KingBee.Module.KingBeeModule();
 #endif
+#if GAME_TURBOTOYS
+        yield return new TurboToys.TurboToysModule();
+#endif
         foreach (var module in Extra)
         {
             yield return module;

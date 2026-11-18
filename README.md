@@ -10,7 +10,7 @@
 
 ---
 
-MatGame ist der **Master** für BunnyWarfare, King Bee und alle späteren Mat-Spiele: eine Docker-App, in der die Spiele als **Plugins**
+MatGame ist der **Master** für BunnyWarfare, King Bee, TurboToys und alle späteren Mat-Spiele: eine Docker-App, in der die Spiele als **Plugins**
 stecken. Unter einer Adresse (z. B. `games.matthix.de`) gibt es:
 
 - 🎮 **das Portal** – alle Spiele als Karten, ein Klick startet das Spiel im Browser,
@@ -44,6 +44,7 @@ Keine Variable ist nötig. Optional (Umgebung des Dienstes `web`):
 | Variable | Bedeutung |
 |---|---|
 | `MATGAME_GAMES` | nur diese Spiele laden, z. B. `bunnywarfare,kingbee` (Standard: alle eingebauten) |
+| `MATGAME_PORT` | ein anderer Port des Hosts (Standard 2770; das eigene Image von TurboToys setzt 2773) |
 | `MATGAME_DB` | eine andere PostgreSQL-Verbindung (Standard: der `db`-Dienst des Stacks) |
 | `MAT_PUBLIC_URL` | die öffentliche Adresse (für die Links der Geräte-Anmeldung); ohne: die Adresse des Aufrufs |
 | `MAT_API_KEY` | der Schlüssel der Mat-Plattform-API (`/api/state`, `/api/configure`, `/api/actions`) für Mattiverse |
@@ -59,9 +60,10 @@ Name des Servers, Registrierung, Gäste und eine neue Adresse (Domainwechsel) st
 |---|---|---|---|
 | BunnyWarfare | [Real-TTX/BunnyWarfare](https://github.com/Real-TTX/BunnyWarfare) | `/bunnywarfare/` | `BunnyWarfare.Module` |
 | King Bee | [Real-TTX/KingBee](https://github.com/Real-TTX/KingBee) | `/kingbee/` | `KingBee.Module` |
+| TurboToys | [Real-TTX/TurboToys](https://github.com/Real-TTX/TurboToys) | `/turbotoys/` | `TurboToys.Module` |
 
 Die Spiele werden **aus den Nachbar-Repos** eingebaut: Alle Repos liegen nebeneinander (`Development/MatGame`, `Development/BunnyWarfare`,
-`Development/KingBee`), lokal genauso wie in der CI und im Docker-Build.
+`Development/KingBee`, `Development/TurboToys`), lokal genauso wie in der CI und im Docker-Build.
 
 ## Entwickeln
 

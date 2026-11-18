@@ -17,7 +17,7 @@ Dazu kommen **Apps**: Windows jetzt, iOS und Android später. Sie spielen **offl
 |---|---|---|
 | **MatGame** | der Master: Host, Konten, Portal, Admin, Plugin-System, Discovery | Repo `MatGame`, Docker-Image `matgame` |
 | **MatGame SDK** | gemeinsamer Code: Plugin-Schnittstelle (C#), Client-Bibliothek (JS), App-Hülle (MAUI) | Repo `MatGame`: die Spiele binden die C#-Projekte aus dem Nachbar-Repo ein, die JS-Bibliothek wird kopiert |
-| **Spiele** | Spielregeln, Plugin (Server-Teil + Web-Client + Admin-Seiten), App | eigene Repos: `BunnyWarfare`, `KingBee`, … |
+| **Spiele** | Spielregeln, Plugin (Server-Teil + Web-Client + Admin-Seiten), App | eigene Repos: `BunnyWarfare`, `KingBee`, `TurboToys`, … |
 
 ## 2. Grundsätze
 
@@ -99,6 +99,7 @@ public interface IGameModule
   - Plugins zur Laufzeit als DLL in einen Ordner zu legen, ginge auch. Das ist aber wegen Versionen und Migrationen fehleranfällig, deshalb **nicht**.
 - **Entwickeln im Spiel-Repo:** **Umsetzung:** der lokale Stack von MatGame (`../MatGame/scripts/redeploy.ps1`, Port 2770) baut den Host mit den Spielen aus den Nachbar-Repos. Man arbeitet also immer in der echten Umgebung.
 - **Wenn es später eng wird:** Dasselbe Image kann mit `MATGAME_GAMES=bunnywarfare` nur einen Teil der Spiele laden. So läuft ein Spiel in einem eigenen Container unter derselben Domain, ohne Umbau.
+- **Umsetzung (TurboToys):** Ein Spiel darf zusätzlich ein eigenes Image bauen – den Host mit nur diesem Spiel (`MatGameGames=turbotoys`, `MATGAME_GAMES=turbotoys`) auf eigenem Port (`MATGAME_PORT=2773`), etwa für eine LAN-Party. Im Image von MatGame ist es trotzdem enthalten.
 
 ## 5. Was der Master macht
 

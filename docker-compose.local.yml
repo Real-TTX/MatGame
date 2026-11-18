@@ -1,4 +1,4 @@
-# MatGame - Local (builds the image from this folder and the sibling repositories ../BunnyWarfare and ../KingBee) with pgAdmin
+# MatGame - Local (builds the image from this folder and the sibling repositories ../BunnyWarfare, ../KingBee and ../TurboToys) with pgAdmin
 #   ./scripts/redeploy.ps1              (rebuilds and starts the stack: the way to test every change of MatGame and of the games)
 #   docker compose -f docker-compose.local.yml up -d --build
 #   App:      http://localhost:2770
@@ -13,6 +13,7 @@ services:
       additional_contexts:
         bunnywarfare: ../BunnyWarfare
         kingbee: ../KingBee
+        turbotoys: ../TurboToys
       args:
         GAMES: all
     image: matgame:local

@@ -6,15 +6,17 @@
   </PropertyGroup>
 
   <!--
-    The games (plugins) are compiled in from the sibling repositories (../BunnyWarfare, ../KingBee: the same folder layout locally, in CI and in the Docker build).
+    The games (plugins) are compiled in from the sibling repositories (../BunnyWarfare, ../KingBee, ../TurboToys: the same folder layout locally, in CI and in the Docker build).
     MatGameGames chooses them: "all" (default), "none", or a list like "bunnywarfare;kingbee". Each chosen game defines GAME_<ID> for Games.cs.
   -->
   <PropertyGroup>
     <MatGameGames Condition="'$(MatGameGames)' == ''">all</MatGameGames>
     <GameBunnyWarfare Condition="'$(MatGameGames)' == 'all' Or $([System.String]::Copy(';$(MatGameGames);').Contains(';bunnywarfare;'))">true</GameBunnyWarfare>
     <GameKingBee Condition="'$(MatGameGames)' == 'all' Or $([System.String]::Copy(';$(MatGameGames);').Contains(';kingbee;'))">true</GameKingBee>
+    <GameTurboToys Condition="'$(MatGameGames)' == 'all' Or $([System.String]::Copy(';$(MatGameGames);').Contains(';turbotoys;'))">true</GameTurboToys>
     <DefineConstants Condition="'$(GameBunnyWarfare)' == 'true'">$(DefineConstants);GAME_BUNNYWARFARE</DefineConstants>
     <DefineConstants Condition="'$(GameKingBee)' == 'true'">$(DefineConstants);GAME_KINGBEE</DefineConstants>
+    <DefineConstants Condition="'$(GameTurboToys)' == 'true'">$(DefineConstants);GAME_TURBOTOYS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +29,10 @@
 
   <ItemGroup Condition="'$(GameKingBee)' == 'true'">
     <ProjectReference Include="..\..\..\KingBee\server\KingBee.Module\KingBee.Module.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GameTurboToys)' == 'true'">
+    <ProjectReference Include="..\..\..\TurboToys\src\TurboToys.Module\TurboToys.Module.csproj" />
   </ItemGroup>
 
   <ItemGroup>

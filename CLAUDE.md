@@ -7,7 +7,7 @@ Guidance for working in this repository. Keep it in sync with the code.
 The **master server of the Mat games**: one Docker app with the games as **plugins** (the MatCloud module pattern). It has the portal (`/`, player-facing,
 cartoon look), one account for all games (or guests), the device sign-in of the apps (`/link`), the discovery for the apps (`/.well-known/matgame`), the
 administration (`/Admin`, MatUi) with one group per game, and the Mat platform contract (`/api`, MatPlatform 2.4, optional MatIdentity). Each game is a
-plugin (`MatGame.Sdk.IGameModule`) in its own repository: BunnyWarfare (`../BunnyWarfare/src/BunnyWarfare.Module`), KingBee (`../KingBee/server/KingBee.Module`).
+plugin (`MatGame.Sdk.IGameModule`) in its own repository: BunnyWarfare (`../BunnyWarfare/src/BunnyWarfare.Module`), KingBee (`../KingBee/server/KingBee.Module`), TurboToys (`../TurboToys/src/TurboToys.Module`; it also builds an own image with only itself on port 2773 through `MATGAME_PORT`/`MATGAME_GAMES`).
 The concept is docs/KONZEPT.md (German), the protocol docs/PROTOCOL.md (update it with every change of the host API, discovery, SDK or bridge).
 Stack: ASP.NET Core **.NET 10**, **Razor Pages**, EF Core + **PostgreSQL 17** (schema `matgame`; every game its own schema), MatUi (copied, never edited),
 MatPlatform (copied by `node ../MatDesign/tools/matplatform-copy.js src/MatGame`, never edited here), Docker. Port **2770** (pgAdmin 2771, local Postgres 2775).
@@ -15,11 +15,11 @@ Accent violet `#6d28d9` (not yet in MatDesign's `AppRegistry.cs`: add it there).
 
 ## Build / run / test
 
-- **All repositories side by side:** `Development/MatGame`, `Development/BunnyWarfare`, `Development/KingBee`. MatGame.csproj references the plugins from
+- **All repositories side by side:** `Development/MatGame`, `Development/BunnyWarfare`, `Development/KingBee`, `Development/TurboToys`. MatGame.csproj references the plugins from
   there (ProjectReference), the plugins reference `../MatGame/src/MatGame.Sdk`. The same layout in the CI (three checkouts) and in the Docker build
-  (named build contexts `bunnywarfare`, `kingbee`).
+  (named build contexts `bunnywarfare`, `kingbee`, `turbotoys`).
 - `dotnet build MatGame.slnx` (0 warnings expected), `dotnet test MatGame.slnx`. `-p:MatGameGames=none` (or the environment variable `MatGameGames=none`)
-  builds the host without the games; a list `bunnywarfare;kingbee` chooses some.
+  builds the host without the games; a list `bunnywarfare;kingbee;turbotoys` chooses some. `MATGAME_PORT` changes the port (default 2770; the health check follows it).
 - Tests: `RulesTests` always; `HostTests` (the whole host in memory with the sample plugin `tests/MatGame.Tests.SampleGame`: discovery, sign-in, guests,
   tokens, device link, 426, switched-off game, plugin admin page inside the host layout) only with
   `$env:MATGAME_TEST_DB = "Host=localhost;Port=2775;Database=postgres;Username=matgame;Password=matgame"` (each test makes and drops its own database).

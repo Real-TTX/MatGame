@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
 # MatGame with its games. The games come from the sibling repositories as named build contexts:
-#   docker build --build-context bunnywarfare=../BunnyWarfare --build-context kingbee=../KingBee -t matgame:local .
-# (docker-compose.local.yml and the CI pass them; the folder layout /src/MatGame, /src/BunnyWarfare, /src/KingBee keeps the relative ProjectReferences).
+#   docker build --build-context bunnywarfare=../BunnyWarfare --build-context kingbee=../KingBee --build-context turbotoys=../TurboToys -t matgame:local .
+# (docker-compose.local.yml and the CI pass them; the folder layout /src/MatGame, /src/BunnyWarfare, /src/KingBee, /src/TurboToys keeps the relative ProjectReferences).
 # GAMES chooses the games compiled in: "all" (default), "none", or a list like "bunnywarfare;kingbee" (MSBuild property MatGameGames).
 
 # ---------------------------------------------------------------------------
@@ -35,6 +35,7 @@ WORKDIR /src
 COPY . MatGame/
 COPY --from=bunnywarfare . BunnyWarfare/
 COPY --from=kingbee-web /src/KingBee KingBee/
+COPY --from=turbotoys . TurboToys/
 # build output of a developer's machine (Windows paths in obj/) must never reach the restore
 RUN find . -type d \( -name bin -o -name obj -o -name node_modules -o -name .git \) -prune -exec rm -rf {} + && \
     dotnet restore "MatGame/src/MatGame/MatGame.csproj" -p:MatGameGames="$GAMES"
@@ -52,7 +53,7 @@ RUN BUILD_DATE="${BuildDate:-$(date -u +%Y%m%d)}" && \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 LABEL org.opencontainers.image.title="MatGame" \
-      org.opencontainers.image.description="Der Server der Mat-Spiele: Portal, Konten und Online-Partien (BunnyWarfare, King Bee) mit Administration" \
+      org.opencontainers.image.description="Der Server der Mat-Spiele: Portal, Konten und Online-Partien (BunnyWarfare, King Bee, TurboToys) mit Administration" \
       org.opencontainers.image.source="https://github.com/Real-TTX/MatGame"
 
 WORKDIR /app

@@ -14,7 +14,8 @@ public static class AppInfo
 
     public static readonly DateTime Started = DateTime.UtcNow;
 
-    public const int Port = 2770;
+    /// <summary>The port the host listens on: 2770, or MATGAME_PORT (a single-game image, e.g. TurboToys on 2773). The health check asks the same port.</summary>
+    public static readonly int Port = int.TryParse(Environment.GetEnvironmentVariable("MATGAME_PORT"), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var port) && port > 0 ? port : 2770;
 }
 
 /// <summary><c>dotnet MatGame.dll --healthcheck</c>: asks the running app for /api/health (the image needs no curl). Exit code 0 = healthy.</summary>

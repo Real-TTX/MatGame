@@ -1,6 +1,6 @@
 name: build
 
-# MatGame is built together with its games: the repositories BunnyWarfare and KingBee are checked out next to MatGame
+# MatGame is built together with its games: the repositories BunnyWarfare, KingBee and TurboToys are checked out next to MatGame
 # (the same layout as on a developer's machine), so the relative ProjectReferences and the Docker build contexts resolve.
 #   main -> release image :latest (games from their main)   |   dev -> nightly image :nightly (games from their dev, else main)
 # A game repository starts this workflow after its own build: repository_dispatch, type "game-updated", payload { "branch": "main" | "dev" }.
@@ -59,7 +59,7 @@ jobs:
           esac
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then channel=local; fi
           # MatGame and the games follow the branch when they have it, else main
-          for repo in MatGame BunnyWarfare KingBee; do
+          for repo in MatGame BunnyWarfare KingBee TurboToys; do
             if git ls-remote --exit-code --heads "https://github.com/${OWNER}/${repo}.git" "$branch" >/dev/null 2>&1; then ref="$branch"; else ref=main; fi
             echo "ref_$(echo "$repo" | tr '[:upper:]' '[:lower:]')=$ref" >> "$GITHUB_OUTPUT"
           done
@@ -86,6 +86,12 @@ jobs:
           repository: ${{ env.OWNER }}/KingBee
           ref: ${{ steps.ver.outputs.ref_kingbee }}
           path: KingBee
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OWNER }}/TurboToys
+          ref: ${{ steps.ver.outputs.ref_turbotoys }}
+          path: TurboToys
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -184,6 +190,7 @@ jobs:
           build-contexts: |
             bunnywarfare=BunnyWarfare
             kingbee=KingBee
+            turbotoys=TurboToys
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           build-args: |
