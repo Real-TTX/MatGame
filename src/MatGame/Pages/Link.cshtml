@@ -1,0 +1,63 @@
+@page "/link"
+@model LinkModel
+@{
+    Layout = "_PortalLayout";
+    ViewData["Title"] = "App anmelden";
+    var me = Model.Me;
+    var back = "/link" + (string.IsNullOrEmpty(Model.Code) ? "" : "?code=" + Uri.EscapeDataString(Model.Code));
+    var platform = Model.Link?.Platform switch { "windows" => "Windows", "android" => "Android", "ios" => "iOS", "macos" => "macOS", var p => p };
+}
+
+<header class="mg-top">
+    <a class="mg-brand" href="/"><img src="~/img/logo-mark.svg" alt="" width="44" height="44" /><span class="mg-brand__name">@Model.Settings.Name</span></a>
+</header>
+
+<main class="mg-center">
+    @if (Model.Done is not null)
+    {
+        <section class="mg-panel">
+            <h1 class="mg-title">@(Model.Done == "approved" ? "Fertig!" : "Abgelehnt")</h1>
+            <p class="@(Model.Done == "approved" ? "mg-ok" : "mg-error")">@(Model.Done == "approved" ? "Die App ist jetzt angemeldet. Du kannst dieses Fenster schließen und weiterspielen." : "Die App wurde nicht angemeldet.")</p>
+            <p><a class="mg-btn mg-btn--wide" href="/">Zu den Spielen</a></p>
+        </section>
+    }
+    else if (!me.IsSignedIn)
+    {
+        <div class="mg-stack">
+            <p class="mg-hero-note">Melde dich an, um die App zu verbinden.</p>
+            <partial name="_AuthPanel" model="@(new AuthPanelModel(Model.CanRegister, false, Model.FirstRun, Model.IdentityEnabled, back, Model.FirstRun ? "register" : "login", Closable: false))" />
+        </div>
+    }
+    else
+    {
+        <section class="mg-panel" aria-labelledby="mg-link-title">
+            <h1 class="mg-title" id="mg-link-title">App anmelden</h1>
+            <form method="@(Model.Link is null ? "get" : "post")" class="mg-form" novalidate>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <p class="mg-error" role="alert">@string.Join(" ", ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))</p>
+                }
+                @if (Model.Link is { } link)
+                {
+                    <p class="mg-note">Die App <b>@link.DeviceName</b>@(string.IsNullOrEmpty(platform) ? "" : $" ({platform})") möchte sich als <b>@me.DisplayName</b> anmelden. Stimmt der Code mit dem in der App überein?</p>
+                    <div class="mg-code">@link.Code</div>
+                    <input type="hidden" name="Code" value="@link.Code" />
+                    <div class="mg-buttons">
+                        <button class="mg-btn mg-btn--primary" type="submit" name="decision" value="approve">Anmelden</button>
+                        <button class="mg-btn mg-btn--danger" type="submit" name="decision" value="deny">Ablehnen</button>
+                    </div>
+                }
+                else
+                {
+                    @if (!string.IsNullOrEmpty(Model.Code))
+                    {
+                        <p class="mg-error" role="alert">Diesen Code gibt es nicht (mehr). Starte die Anmeldung in der App neu oder tipp den Code noch einmal ein.</p>
+                    }
+                    <p class="mg-note">Gib den Code ein, den dir die App zeigt.</p>
+                    <label class="mg-field"><span>Code</span><input name="Code" value="@Model.Code" placeholder="ABCD-EFGH" maxlength="12" autocomplete="off" autocapitalize="characters" required /></label>
+                    <button class="mg-btn mg-btn--primary mg-btn--wide" type="submit">Weiter</button>
+                }
+            </form>
+        </section>
+    }
+</main>

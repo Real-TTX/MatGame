@@ -1,0 +1,40 @@
+# MatGame - Release (branch main, image :latest)
+#   docker compose up -d        ->  http://localhost:2770
+# The first account that registers is the administrator (Administration: /Admin).
+# Optional settings (environment of the web service, see README "Einstellungen"):
+#   MATGAME_GAMES: "bunnywarfare,kingbee"          only these games (default: all compiled in)
+#   MAT_API_KEY: "..."                             the key of the Mat platform API (/api/state, /api/configure ...)
+#   MAT_PUBLIC_URL: "https://games.example.com"    the public address (links of the device sign-in)
+#   MATIDENTITY_AUTHORITY / MATIDENTITY_CLIENT_ID / MATIDENTITY_CLIENT_SECRET: sign-in through MatIdentity
+name: matgame
+
+services:
+  web:
+    image: ghcr.io/real-ttx/matgame:latest
+    restart: unless-stopped
+    ports:
+      - "2770:2770"
+    volumes:
+      - web-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: matgame
+      POSTGRES_USER: matgame
+      POSTGRES_PASSWORD: matgame
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matgame -d matgame"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  web-data:
+  db-data:

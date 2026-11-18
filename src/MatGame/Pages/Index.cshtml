@@ -1,0 +1,176 @@
+@page "/"
+@model IndexModel
+@{
+    Layout = "_PortalLayout";
+    var a = Model.Account;
+    var tab = Model.OpenPanel is "register" or "guest" ? Model.OpenPanel : Model.FirstRun ? "register" : "login";
+}
+
+<header class="mg-top">
+    <a class="mg-brand" href="/">
+        <img src="~/img/logo-mark.svg" alt="" width="44" height="44" />
+        <span class="mg-brand__name">@Model.Settings.Name</span>
+    </a>
+    <nav class="mg-top__actions">
+        @if (a is null)
+        {
+            <button type="button" class="mg-btn mg-btn--primary" data-open="auth">Anmelden</button>
+        }
+        else
+        {
+            @if (a.IsAdmin)
+            {
+                <a class="mg-btn mg-btn--ghost mg-hide-sm" href="/Admin">Administration</a>
+            }
+            <button type="button" class="mg-chip" data-open="profile" aria-label="Mein Profil">
+                <span class="mg-avatar" aria-hidden="true">@Ui.Initials(a.DisplayName)</span>
+                <span class="mg-chip__name">@a.DisplayName@(a.IsGuest ? " (Gast)" : "")</span>
+            </button>
+        }
+    </nav>
+</header>
+
+<main class="mg-main">
+    <section class="mg-hero">
+        <h1>@(a is null ? "Lust auf eine Runde?" : $"Hallo {a.DisplayName}!")</h1>
+        <p>@(Model.Games.Count == 0 ? "Auf diesem Server ist noch kein Spiel eingerichtet." : "Such dir ein Spiel aus – im Browser, sofort, gegen Freunde oder Bots.")</p>
+    </section>
+
+    <section class="mg-games" aria-label="Spiele">
+        @foreach (var g in Model.Games)
+        {
+            <article class="mg-card @(g.IsEnabled ? "" : "is-off")" style="--mg-accent:@(Ui.IsColor(g.Accent) ? g.Accent : "#6d28d9")">
+                <div class="mg-card__cover">
+                    @if (g.Cover is not null)
+                    {
+                        <img src="@g.Cover" alt="" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="mg-card__initial" aria-hidden="true">@g.Name[..1]</span>
+                    }
+                    @if (g.Profile is { } p)
+                    {
+                        <span class="mg-badge" title="@(p.Detail ?? "Dein Level")">Level @p.Level</span>
+                    }
+                </div>
+                <div class="mg-card__body">
+                    <h2 class="mg-card__title">@g.Name</h2>
+                    <p class="mg-card__text">@g.Tagline</p>
+                    <p class="mg-card__stats">
+                        <span><b>@g.Stats.PlayersOnline</b> online</span>
+                        <span><b>@g.Stats.RunningMatches</b> @(g.Stats.RunningMatches == 1 ? "Partie" : "Partien")</span>
+                    </p>
+                    @if (g.IsEnabled)
+                    {
+                        <a class="mg-btn mg-btn--primary mg-btn--wide" href="@g.Path">Spielen</a>
+                    }
+                    else
+                    {
+                        <span class="mg-btn mg-btn--wide is-disabled" aria-disabled="true">Gerade abgeschaltet</span>
+                    }
+                </div>
+            </article>
+        }
+    </section>
+
+    <section class="mg-apps">
+        <h2>Auch als App</h2>
+        <p>Die Spiele gibt es für Windows – offline gegen Bots, online gegen alle auf diesem Server. Trag in der App unter <b>Server</b> diese Adresse ein:
+            <code data-origin>@($"{Request.Scheme}://{Request.Host}")</code></p>
+    </section>
+</main>
+
+<footer class="mg-foot">
+    <span>@Model.Settings.Name · läuft mit MatGame</span>
+    <a href="/About">@AppInfo.Version</a>
+</footer>
+
+<div class="mg-overlay" id="mg-overlay-auth" data-overlay="auth" hidden="@(Model.OpenPanel is null or "profile")">
+    <partial name="_AuthPanel" model="@(new AuthPanelModel(Model.CanRegister, Model.Settings.GuestsAllowed, Model.FirstRun, Model.IdentityEnabled, Model.ReturnUrl, tab, !Model.FirstRun))" />
+</div>
+
+@if (a is not null)
+{
+    <div class="mg-overlay" data-overlay="profile" hidden="@(Model.OpenPanel != "profile")">
+        <section class="mg-panel mg-profile" aria-labelledby="mg-profile-title">
+            <button type="button" class="mg-close" data-close aria-label="Schließen">×</button>
+            <div class="mg-profile__head">
+                <span class="mg-avatar mg-avatar--lg" aria-hidden="true">@Ui.Initials(a.DisplayName)</span>
+                <div>
+                    <h2 class="mg-title" id="mg-profile-title">@a.DisplayName</h2>
+                    <p class="mg-note">@(a.IsGuest ? "Gast auf diesem Server" : a.IsAdmin ? $"Administrator · {a.LoginName}" : a.LoginName)</p>
+                </div>
+            </div>
+
+            @if (Model.Games.Any(g => g.Profile is not null))
+            {
+                <h3 class="mg-sub">Deine Spiele</h3>
+                <ul class="mg-levels">
+                    @foreach (var g in Model.Games.Where(g => g.Profile is not null))
+                    {
+                        <li style="--mg-accent:@g.Accent"><span>@g.Name</span><b>Level @g.Profile!.Level</b>@if (g.Profile.Detail is not null) { <small>@g.Profile.Detail</small> }</li>
+                    }
+                </ul>
+            }
+
+            <h3 class="mg-sub">Name</h3>
+            <form class="mg-form mg-form--row" data-api="/api/matgame/account" data-method="PUT">
+                <label class="mg-field"><span class="mg-sr">Name</span><input name="displayName" value="@a.DisplayName" required minlength="2" maxlength="@(a.IsGuest ? 24 : 60)" /></label>
+                <button class="mg-btn" type="submit">Speichern</button>
+                <p class="mg-error" role="alert" hidden></p>
+            </form>
+
+            @if (a.IsGuest)
+            {
+                <h3 class="mg-sub">Konto daraus machen</h3>
+                <p class="mg-note">Dann kannst du dich überall anmelden und landest in der Rangliste. Dein Fortschritt bleibt.</p>
+                <form class="mg-form" data-api="/api/matgame/account/upgrade">
+                    <input type="hidden" name="displayName" value="@a.DisplayName" />
+                    <label class="mg-field"><span>Anmeldename</span><input name="loginName" required maxlength="40" autocomplete="username" /></label>
+                    <label class="mg-field"><span>Passwort</span><input name="password" type="password" required minlength="@AccountLogic.PasswordMinLength" autocomplete="new-password" /></label>
+                    <p class="mg-error" role="alert" hidden></p>
+                    <button class="mg-btn mg-btn--primary" type="submit">Konto anlegen</button>
+                </form>
+            }
+            else
+            {
+                <h3 class="mg-sub">Passwort ändern</h3>
+                <form class="mg-form" data-api="/api/matgame/account/password" data-done="Passwort geändert.">
+                    <label class="mg-field"><span>Bisheriges Passwort</span><input name="currentPassword" type="password" autocomplete="current-password" /></label>
+                    <label class="mg-field"><span>Neues Passwort</span><input name="newPassword" type="password" required minlength="@AccountLogic.PasswordMinLength" autocomplete="new-password" /></label>
+                    <p class="mg-error" role="alert" hidden></p>
+                    <button class="mg-btn" type="submit">Ändern</button>
+                </form>
+            }
+
+            <h3 class="mg-sub">Geräte</h3>
+            @if (Model.Devices.Count == 0)
+            {
+                <p class="mg-note">Noch keine App angemeldet.</p>
+            }
+            else
+            {
+                <ul class="mg-devices">
+                    @foreach (var d in Model.Devices)
+                    {
+                        <li>
+                            <span><b>@d.Name</b><small>zuletzt @Ui.Stamp(d.LastUsedDate)</small></span>
+                            <button type="button" class="mg-btn mg-btn--small mg-btn--danger" data-remove-device="@d.Id" aria-label="@d.Name abmelden">Abmelden</button>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <div class="mg-profile__foot">
+                @if (a.IsAdmin)
+                {
+                    <a class="mg-btn mg-btn--ghost" href="/Admin">Administration</a>
+                }
+                <button type="button" class="mg-btn mg-btn--danger" data-logout>Abmelden</button>
+            </div>
+        </section>
+    </div>
+}
+
+<div class="mg-toast" id="mg-toast" role="status" hidden></div>

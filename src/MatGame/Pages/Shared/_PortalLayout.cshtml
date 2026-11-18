@@ -1,0 +1,26 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    // The player-facing shell (portal, device sign-in, about): the cartoon look of the games, not MatUi.
+    var title = ViewData["Title"] as string;
+    var serverName = ViewData["ServerName"] as string ?? Ui.AppName;
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#6d28d9" />
+    <meta name="mg-antiforgery" content="@token" />
+    <title>@(title is null ? serverName : $"{title} · {serverName}")</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="preload" href="~/fonts/lilita-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/portal.css" asp-append-version="true" />
+</head>
+<body class="mg-portal">
+    <div class="mg-sky" aria-hidden="true"><span class="mg-cloud mg-cloud--1"></span><span class="mg-cloud mg-cloud--2"></span><span class="mg-cloud mg-cloud--3"></span></div>
+    @RenderBody()
+    <script type="module" src="~/js/portal.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

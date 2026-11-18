@@ -1,6 +1,6 @@
 # MatGame – Konzept
 
-> Stand: 18.11.2026 · Entwurf, Grundentscheidungen getroffen · gilt für BunnyWarfare, KingBee und jedes spätere Spiel
+> Stand: 18.11.2026 · umgesetzt: Host, SDK, Plugins (Abweichungen vom ersten Entwurf sind markiert: **Umsetzung**) · gilt für BunnyWarfare, KingBee und jedes spätere Spiel
 
 ## 1. Worum es geht
 
@@ -16,7 +16,7 @@ Dazu kommen **Apps**: Windows jetzt, iOS und Android später. Sie spielen **offl
 | Teil | Was es ist | Wo es lebt |
 |---|---|---|
 | **MatGame** | der Master: Host, Konten, Portal, Admin, Plugin-System, Discovery | Repo `MatGame`, Docker-Image `matgame` |
-| **MatGame SDK** | gemeinsamer Code: Plugin-Schnittstelle (C#), Client-Bibliothek (JS), App-Hülle (MAUI) | Repo `MatGame`, wird in die Spiele kopiert bzw. als Paket bezogen |
+| **MatGame SDK** | gemeinsamer Code: Plugin-Schnittstelle (C#), Client-Bibliothek (JS), App-Hülle (MAUI) | Repo `MatGame`: die Spiele binden die C#-Projekte aus dem Nachbar-Repo ein, die JS-Bibliothek wird kopiert |
 | **Spiele** | Spielregeln, Plugin (Server-Teil + Web-Client + Admin-Seiten), App | eigene Repos: `BunnyWarfare`, `KingBee`, … |
 
 ## 2. Grundsätze
@@ -92,11 +92,12 @@ public interface IGameModule
   - Spielbezogenes bleibt im Plugin, verknüpft über die Konto-Id: bei BunnyWarfare XP, Look und Statistik.
   - Das Plugin bekommt den angemeldeten `Actor` vom Host, wie heute von `Identity`.
 - **Wie ein Plugin in den Master kommt:**
-  - Das Spiel-Repo veröffentlicht `BunnyWarfare.Module` als **NuGet-Paket** auf GitHub Packages.
-  - MatGame bindet die Pakete mit festen Versionen ein und baut **ein** Image mit allen Spielen.
-  - Ein Push im Spiel-Repo stößt den Build von MatGame an (`repository_dispatch`): `dev` erzeugt das Nightly-Image, `main` das Release-Image.
+  - **Umsetzung:** keine NuGet-Pakete. Alle Repos liegen nebeneinander (`Development/MatGame`, `Development/BunnyWarfare`, `Development/KingBee`) – lokal, in der CI und im Docker-Build. `MatGame.csproj` bindet die Plugins als **ProjectReference aus dem Nachbar-Repo** ein, die Plugins `MatGame.Sdk` genauso. Das spart Paket-Feeds und Tokens; die Repos sind öffentlich.
+  - Welche Spiele hineinkommen, sagt die MSBuild-Eigenschaft `MatGameGames` (`all`, `none` oder `bunnywarfare;kingbee`), im Docker-Build das Build-Argument `GAMES`.
+  - MatGame baut **ein** Image mit allen Spielen. Der Docker-Build bekommt die Spiele als benannte Build-Kontexte (`--build-context bunnywarfare=../BunnyWarfare`).
+  - Ein Push im Spiel-Repo stößt den Build von MatGame an (`repository_dispatch`, Typ `game-updated`, `{ branch }`): `dev` erzeugt das Nightly-Image, `main` das Release-Image. Zusätzlich baut MatGame jede Nacht `:nightly` mit dem neuesten `dev` aller Spiele.
   - Plugins zur Laufzeit als DLL in einen Ordner zu legen, ginge auch. Das ist aber wegen Versionen und Migrationen fehleranfällig, deshalb **nicht**.
-- **Entwickeln im Spiel-Repo:** Ein kleiner Dev-Host ist MatGame mit nur diesem Plugin, aus dem Paket `MatGame.Host`. `./scripts/redeploy.ps1` startet ihn lokal mit Postgres wie heute. Man arbeitet also immer in der echten Umgebung.
+- **Entwickeln im Spiel-Repo:** **Umsetzung:** der lokale Stack von MatGame (`../MatGame/scripts/redeploy.ps1`, Port 2770) baut den Host mit den Spielen aus den Nachbar-Repos. Man arbeitet also immer in der echten Umgebung.
 - **Wenn es später eng wird:** Dasselbe Image kann mit `MATGAME_GAMES=bunnywarfare` nur einen Teil der Spiele laden. So läuft ein Spiel in einem eigenen Container unter derselben Domain, ohne Umbau.
 
 ## 5. Was der Master macht
@@ -188,7 +189,9 @@ Eine ES-Bibliothek ohne Build-Schritt, die auch in Vite funktioniert. Sie wird i
 
 Jedes Spiel zeichnet die Oberfläche in seinem eigenen Stil. Pflicht im Menü: **Server**, **Offline spielen**, das Abzeichen. Bei BunnyWarfare spricht `match.js` danach nur noch mit `transport`, nie mehr direkt mit SignalR.
 
-## 8. Die App-Hülle: .NET MAUI
+## 8. Die App-Hülle: .NET MAUI (Windows zuerst mit WebView2)
+
+**Umsetzung:** Der MAUI-Workload braucht Administratorrechte zum Installieren. Die Windows-App startet deshalb mit dem vorgesehenen Ausweichweg (eine schlanke Hülle mit WebView2) und **derselben Brücke** (docs/PROTOCOL.md „Bridge“). MAUI kommt für iOS und Android dazu, sobald der Workload installiert ist (`dotnet workload install maui` als Administrator); der Spielkern (`MatGame.Local.ILocalGame`) bleibt derselbe.
 
 | Möglichkeit | C# auf dem Gerät (BunnyWarfare offline) | Windows | iOS / Android | Bewertung |
 |---|---|---|---|---|
@@ -232,12 +235,12 @@ Wie die Hülle arbeitet:
 
   | Job | Runner | Ergebnis |
   |---|---|---|
-  | module | ubuntu | Tests, NuGet-Paket `<Spiel>.Module`, dann `repository_dispatch` an MatGame |
+  | module | ubuntu | Tests (mit MatGame als Nachbar-Checkout), dann `repository_dispatch` an MatGame |
   | windows | windows | Setup-exe + Feed-Manifest im GitHub Release |
   | android | ubuntu | aab (ab Phase 6) |
   | ios | macos | ipa (ab Phase 6) |
 
-- **CI in MatGame:** Image `matgame:latest` aus `main` mit den Release-Plugins und `matgame:nightly` aus `dev` mit den Nightly-Plugins. Außerdem werden die SDK-Pakete veröffentlicht (`MatGame.Host`, `MatGame.Sdk`), und die JS-Bibliothek wird mit einem Kopier-Skript plus `matgame.version` verteilt.
+- **CI in MatGame:** Image `matgame:latest` aus `main` mit den Release-Plugins und `matgame:nightly` aus `dev` mit den Nightly-Plugins. Die JS-Bibliothek wird mit `tools/sdk-copy.js` in die Spiele kopiert (`matgame.version` mit Version und SHA-256 jeder Datei).
 
 ## 11. Sicherheit
 
@@ -272,5 +275,5 @@ Wie die Hülle arbeitet:
 **Noch offen:**
 
 1. Name des offiziellen Masters im Portal, etwa „Matthix Games“, und ein Logo für MatGame.
-2. Port und Akzentfarbe (Vorschlag Port 2770, pgAdmin 2771, lokales Postgres 2775).
+2. ~~Port und Akzentfarbe~~ **Umsetzung:** Port 2770 (pgAdmin 2771, lokales Postgres 2775), Akzent Violett `#6d28d9` (noch in MatDesigns `AppRegistry` eintragen).
 3. Code-Signing-Zertifikat für Windows sowie Apple- und Google-Konten: wann besorgen.

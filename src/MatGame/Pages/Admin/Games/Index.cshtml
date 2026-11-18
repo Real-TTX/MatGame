@@ -1,0 +1,48 @@
+@page "/Admin/Games"
+@model MatGame.Pages.Admin.Games.IndexModel
+@{
+    ViewData["Title"] = "Spiele";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Spiele", null) };
+    ViewData["PageSub"] = "Die Spiele dieses Servers. Ein abgeschaltetes Spiel verschwindet aus dem Portal, die Apps spielen es nur noch offline.";
+}
+
+@if (Model.Games.Count == 0)
+{
+    <div class="mat-list">
+        <partial name="_Empty" model="@(new EmptyStateModel("gamepad", "Keine Spiele", "Dieser Server wurde ohne Spiele gebaut oder MATGAME_GAMES lässt keines zu.", false))" />
+    </div>
+}
+else
+{
+    <div class="mg-games">
+        @foreach (var g in Model.Games)
+        {
+            <article class="mat-card" style="--mg-accent:@g.State.Info.Accent">
+                @if (g.Cover is not null)
+                {
+                    <img class="mg-game__cover" src="@g.Cover" alt="" loading="lazy" />
+                }
+                else
+                {
+                    <div class="mg-game__cover" aria-hidden="true"></div>
+                }
+                <div class="mat-card__body">
+                    <h2 class="mat-card__title">@g.State.Info.Name</h2>
+                    <p class="mat-muted">@g.State.Info.Tagline</p>
+                    <dl class="mat-kv">
+                        <dt>Status</dt><dd>@if (g.State.IsEnabled) { <span class="mat-pill mat-pill--ok">An</span> } else { <span class="mat-pill mat-pill--error">Aus</span> }</dd>
+                        <dt>Adresse</dt><dd class="mat-mono">/@g.State.Info.Id/</dd>
+                        <dt>Version</dt><dd class="mat-mono">@g.State.Info.Version</dd>
+                        <dt>Protokoll</dt><dd class="mat-mono">@g.State.Info.Protocol</dd>
+                        <dt>Mindestens App</dt><dd class="mat-mono">@(g.State.MinClient ?? "jede")@(g.State.MinClientOverride is null ? "" : " (Administration)")</dd>
+                        <dt>Online / Partien</dt><dd class="mat-mono">@g.Stats.PlayersOnline / @g.Stats.RunningMatches</dd>
+                    </dl>
+                </div>
+                <div class="mat-card__foot mat-btn-row">
+                    <a class="mat-btn mat-btn--primary" href="/Admin/Games/Edit?id=@g.State.Info.Id">@Ui.Icon("edit")<span>Bearbeiten</span></a>
+                    <a class="mat-btn mat-btn--secondary" href="/@g.State.Info.Id/">@Ui.Icon("external")<span>Öffnen</span></a>
+                </div>
+            </article>
+        }
+    </div>
+}

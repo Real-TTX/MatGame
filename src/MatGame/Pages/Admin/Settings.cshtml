@@ -1,0 +1,48 @@
+@page "/Admin/Settings"
+@model MatGame.Pages.Admin.SettingsModel
+@{
+    ViewData["Title"] = "Einstellungen";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Einstellungen", null) };
+    ViewData["Width"] = "narrow";
+    var tab = Model.Tab;
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+
+    <div data-tabs>
+        <md-tab-group label="Bereiche der Einstellungen">
+            <md-tab-button panel="settings-general" icon="settings" active="@(tab == "general")">Allgemein</md-tab-button>
+            <md-tab-button panel="settings-address" icon="globe" active="@(tab == "address")">Adresse</md-tab-button>
+        </md-tab-group>
+
+        <md-tab-panel id="settings-general" active="@(tab == "general")">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    <md-field name="Name" label="Name des Servers" required value="@Model.Name" maxlength="60" hint="Steht im Portal und in den Apps (z. B. „Matthix Games“)." />
+                    <md-field name="RegistrationOpen" kind="switch" label="Registrierung offen" value="@Model.RegistrationOpen.ToString()" hint="Neue Spieler legen selbst ein Konto an." />
+                    <md-field name="GuestsAllowed" kind="switch" label="Gäste erlaubt" value="@Model.GuestsAllowed.ToString()" hint="Online ohne Konto spielen (ohne Rangliste). Offline spielt man in den Apps immer als Gast." />
+                </div>
+            </div>
+        </md-tab-panel>
+
+        <md-tab-panel id="settings-address" active="@(tab == "address")">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    <md-field name="MovedTo" kind="url" label="Neue Adresse dieses Servers" value="@Model.MovedTo" optional="true" maxlength="300" placeholder="https://matgame.de"
+                              hint="Nur bei einem Domainwechsel: die Apps übernehmen die neue Adresse selbst (Discovery „moved“). Konten und Geräte bleiben gültig." />
+                </div>
+            </div>
+        </md-tab-panel>
+    </div>
+
+    <md-buttons save="Speichern" back="/Admin" />
+</form>
+
+@* the connections of the Mat platform (MatIdentity, a broker): their own forms, so outside the form above *@
+<section class="mat-card mg-gap">
+    <div class="mat-card__head"><h2 class="mat-card__title">Verbindungen</h2></div>
+    <div class="mat-card__body">
+        <mat-connections />
+    </div>
+</section>

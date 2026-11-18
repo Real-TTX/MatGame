@@ -2,5 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/MatGame.Sdk/MatGame.Sdk.csproj" />
     <Project Path="src/MatGame.Local/MatGame.Local.csproj" />
+    <Project Path="src/MatGame/MatGame.csproj" />
+    <Project Path="src/MatGame.Shell/MatGame.Shell.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MatGame.Tests/MatGame.Tests.csproj" />
+    <Project Path="tests/MatGame.Tests.SampleGame/MatGame.Tests.SampleGame.csproj" />
   </Folder>
 </Solution>

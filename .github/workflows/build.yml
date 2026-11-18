@@ -1,0 +1,196 @@
+name: build
+
+# MatGame is built together with its games: the repositories BunnyWarfare and KingBee are checked out next to MatGame
+# (the same layout as on a developer's machine), so the relative ProjectReferences and the Docker build contexts resolve.
+#   main -> release image :latest (games from their main)   |   dev -> nightly image :nightly (games from their dev, else main)
+# A game repository starts this workflow after its own build: repository_dispatch, type "game-updated", payload { "branch": "main" | "dev" }.
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [game-updated]
+  schedule:
+    - cron: '30 2 * * *'   # every night: the nightly image with the newest dev of every game
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '24'
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: matgame
+          POSTGRES_PASSWORD: matgame
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U matgame" --health-interval 5s --health-timeout 5s --health-retries 20
+
+    steps:
+      # Which branch: a push or a manual run its own; a game's dispatch the branch it names; the nightly schedule dev.
+      - name: Determine branch and version metadata
+        id: ver
+        shell: bash
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          case "${GITHUB_EVENT_NAME}" in
+            repository_dispatch) branch="${{ github.event.client_payload.branch }}"; branch="${branch:-main}" ;;
+            schedule) branch=dev ;;
+            pull_request) branch="${GITHUB_BASE_REF}" ;;
+          esac
+          case "$branch" in
+            main) channel=release ;;
+            dev)  channel=nightly ;;
+            *)    channel=local ;;
+          esac
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then channel=local; fi
+          # MatGame and the games follow the branch when they have it, else main
+          for repo in MatGame BunnyWarfare KingBee; do
+            if git ls-remote --exit-code --heads "https://github.com/${OWNER}/${repo}.git" "$branch" >/dev/null 2>&1; then ref="$branch"; else ref=main; fi
+            echo "ref_$(echo "$repo" | tr '[:upper:]' '[:lower:]')=$ref" >> "$GITHUB_OUTPUT"
+          done
+          {
+            echo "branch=$branch"
+            echo "channel=$channel"
+            echo "date=$(date -u +%Y%m%d)"
+            echo "build=${GITHUB_RUN_NUMBER}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          path: MatGame
+          ref: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && github.ref || steps.ver.outputs.ref_matgame }}
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OWNER }}/BunnyWarfare
+          ref: ${{ steps.ver.outputs.ref_bunnywarfare }}
+          path: BunnyWarfare
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OWNER }}/KingBee
+          ref: ${{ steps.ver.outputs.ref_kingbee }}
+          path: KingBee
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # King Bee's browser part goes into its plugin (server/KingBee.Module/wwwroot) before the .NET build.
+      - name: Build the browser part of King Bee
+        working-directory: KingBee
+        run: npm ci && npm run build
+
+      - name: Restore
+        working-directory: MatGame
+        run: dotnet restore MatGame.slnx
+
+      - name: Build
+        working-directory: MatGame
+        run: >
+          dotnet build MatGame.slnx -c Release --no-restore
+          -p:Channel=${{ steps.ver.outputs.channel }}
+          -p:BuildNumber=${{ steps.ver.outputs.build }}
+          -p:BuildDate=${{ steps.ver.outputs.date }}
+
+      - name: Test
+        working-directory: MatGame
+        env:
+          MATGAME_TEST_DB: Host=localhost;Port=5432;Database=postgres;Username=matgame;Password=matgame
+        run: dotnet test MatGame.slnx -c Release --no-build --verbosity normal
+
+      - name: Check the scripts
+        shell: bash
+        run: |
+          for f in MatGame/sdk/js/*.js MatGame/src/MatGame/wwwroot/js/*.js; do node --check --input-type=module < "$f" || exit 1; done
+
+      - name: Resolve version string
+        id: appver
+        working-directory: MatGame
+        shell: bash
+        run: |
+          v=$(dotnet msbuild src/MatGame/MatGame.csproj -getProperty:InformationalVersion \
+                -p:Channel=${{ steps.ver.outputs.channel }} \
+                -p:BuildNumber=${{ steps.ver.outputs.build }} \
+                -p:BuildDate=${{ steps.ver.outputs.date }})
+          v=$(echo "$v" | tr -d '[:space:]')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $v"
+
+      - name: Set up QEMU (arm64)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Lowercase image name
+        id: img
+        shell: bash
+        run: echo "name=$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      # When the package belongs to another repository, the GITHUB_TOKEN of this one may not write to it: give this repository
+      # write access in the settings of the package, or set the secret GHCR_TOKEN (a personal access token with write:packages).
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USER || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # release: <version>, latest, release   |   nightly: <version>, nightly   |   other branches: <version>   |   pull requests: build only.
+      - name: Image tags
+        id: tags
+        shell: bash
+        run: |
+          image="${{ steps.img.outputs.name }}"
+          version="${{ steps.appver.outputs.version }}"
+          case "${{ steps.ver.outputs.channel }}" in
+            release) tags="$image:$version"$'\n'"$image:latest"$'\n'"$image:release" ;;
+            nightly) tags="$image:$version"$'\n'"$image:nightly" ;;
+            *)       tags="$image:$version" ;;
+          esac
+          {
+            echo "tags<<TAGS"
+            echo "$tags"
+            echo "TAGS"
+          } >> "$GITHUB_OUTPUT"
+          printf '### Image\n\n- version: `%s`\n- BunnyWarfare: `%s`\n- KingBee: `%s`\n' "$version" \
+            "${{ steps.ver.outputs.ref_bunnywarfare }}" "${{ steps.ver.outputs.ref_kingbee }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: MatGame
+          build-contexts: |
+            bunnywarfare=BunnyWarfare
+            kingbee=KingBee
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          build-args: |
+            Channel=${{ steps.ver.outputs.channel }}
+            BuildNumber=${{ steps.ver.outputs.build }}
+            BuildDate=${{ steps.ver.outputs.date }}
+            GIT_SHA=${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

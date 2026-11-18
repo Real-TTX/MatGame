@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    A tiny game plugin for the tests of the host: proves the plugin path (routes under /sample, the game API with the version check, static web assets
+    under the game's path, an admin page of a Razor class library inside the host's admin layout with the SDK's admin kit). It is the template of a new game.
+  -->
+  <PropertyGroup>
+    <RootNamespace>MatGame.Tests.SampleGame</RootNamespace>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <MatGameWebUsings>true</MatGameWebUsings>
+    <StaticWebAssetBasePath>sample</StaticWebAssetBasePath>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\src\MatGame.Sdk\MatGame.Sdk.csproj" />
+  </ItemGroup>
+
+</Project>

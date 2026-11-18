@@ -1,0 +1,63 @@
+@model AuthPanelModel
+@* The sign-in of the portal: account, new account, guest. The forms are sent by js/portal.js to the host API (/api/matgame/session/...). *@
+<section class="mg-panel mg-auth" id="mg-auth" data-return="@Model.ReturnUrl" aria-labelledby="mg-auth-title">
+    @if (Model.Closable)
+    {
+        <button type="button" class="mg-close" data-close aria-label="Schließen">×</button>
+    }
+    <h2 class="mg-title" id="mg-auth-title">@(Model.FirstRun ? "Willkommen! Leg das erste Konto an" : "Mitspielen")</h2>
+    @if (Model.FirstRun)
+    {
+        <p class="mg-note">Das erste Konto wird der Administrator dieses Servers.</p>
+    }
+
+    @if ((Model.FirstRun ? 0 : 1) + (Model.CanRegister ? 1 : 0) + (Model.Guests && !Model.FirstRun ? 1 : 0) > 1)
+    {
+    <div class="mg-tabs" role="tablist">
+        @if (!Model.FirstRun)
+        {
+            <button type="button" role="tab" class="mg-tab" data-tab="login" aria-selected="@(Model.Tab == "login" ? "true" : "false")">Anmelden</button>
+        }
+        @if (Model.CanRegister)
+        {
+            <button type="button" role="tab" class="mg-tab" data-tab="register" aria-selected="@(Model.Tab == "register" ? "true" : "false")">Neues Konto</button>
+        }
+        @if (Model.Guests && !Model.FirstRun)
+        {
+            <button type="button" role="tab" class="mg-tab" data-tab="guest" aria-selected="@(Model.Tab == "guest" ? "true" : "false")">Als Gast</button>
+        }
+    </div>
+    }
+
+    <form class="mg-form" data-form="login" data-api="/api/matgame/session/login" hidden="@(Model.Tab != "login")">
+        <label class="mg-field"><span>Anmeldename</span><input name="loginName" autocomplete="username" required maxlength="60" /></label>
+        <label class="mg-field"><span>Passwort</span><input name="password" type="password" autocomplete="current-password" required /></label>
+        <p class="mg-error" role="alert" hidden></p>
+        <button class="mg-btn mg-btn--primary mg-btn--wide" type="submit">Anmelden</button>
+        @if (Model.IdentityEnabled)
+        {
+            <a class="mg-btn mg-btn--ghost mg-btn--wide" href="/Account/Login?sso=1@(Model.ReturnUrl is null ? "" : "&returnUrl=" + Uri.EscapeDataString(Model.ReturnUrl))">Mit MatIdentity anmelden</a>
+        }
+    </form>
+
+    @if (Model.CanRegister)
+    {
+        <form class="mg-form" data-form="register" data-api="/api/matgame/session/register" hidden="@(Model.Tab != "register")">
+            <label class="mg-field"><span>Dein Name</span><input name="displayName" required maxlength="60" autocomplete="nickname" /></label>
+            <label class="mg-field"><span>Anmeldename</span><input name="loginName" required maxlength="40" autocomplete="username" pattern="[A-Za-z0-9._\-]{3,40}" /><small>3–40 Zeichen: Buchstaben, Ziffern, Punkt, Strich.</small></label>
+            <label class="mg-field"><span>Passwort</span><input name="password" type="password" required minlength="@AccountLogic.PasswordMinLength" autocomplete="new-password" /><small>Mindestens @AccountLogic.PasswordMinLength Zeichen.</small></label>
+            <p class="mg-error" role="alert" hidden></p>
+            <button class="mg-btn mg-btn--primary mg-btn--wide" type="submit">Konto anlegen</button>
+        </form>
+    }
+
+    @if (Model.Guests && !Model.FirstRun)
+    {
+        <form class="mg-form" data-form="guest" data-api="/api/matgame/session/guest" hidden="@(Model.Tab != "guest")">
+            <p class="mg-note">Ohne Konto losspielen. Gäste landen nicht in der Rangliste – ein Konto kannst du später daraus machen, dein Fortschritt bleibt.</p>
+            <label class="mg-field"><span>Wie sollen dich die anderen nennen?</span><input name="name" required minlength="2" maxlength="24" autocomplete="nickname" /></label>
+            <p class="mg-error" role="alert" hidden></p>
+            <button class="mg-btn mg-btn--primary mg-btn--wide" type="submit">Als Gast spielen</button>
+        </form>
+    }
+</section>

@@ -1,0 +1,29 @@
+/* MatGame – the administration's additions to MatUi. Only tokens of MatUi, no raw colours except the games' accents and team colours.
+   A game's admin pages add their own stylesheet in the section "Head" (e.g. /bunnywarfare/css/admin.css). */
+
+/* the colour of the app, nothing else (violet) */
+[data-app="matgame"] { --mat-app-accent: #6d28d9; }
+
+/* spacing between tiles and cards that stand one after another */
+.mg-gap { margin-top: var(--mat-space-5); }
+.mat-page > .mat-card + .mat-card,
+.mat-form > .mat-card + .mat-card { margin-top: var(--mat-space-4); }
+
+/* a small round swatch of a colour (Ui.Swatch: team colours, the accents of the games) */
+.bw-swatch {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  background: var(--bw-team);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bw-team) 30%, transparent);
+  vertical-align: baseline;
+  margin-right: 4px;
+}
+
+/* the games in the overview and the list */
+.mg-game { display: flex; align-items: center; gap: var(--mat-space-3); }
+.mg-game__icon { width: 36px; height: 36px; border-radius: 10px; object-fit: cover; background: var(--mg-accent, var(--mat-app-accent)); flex: none; }
+.mg-game__cover { display: block; width: 100%; aspect-ratio: 16 / 7; object-fit: cover; border-radius: var(--mat-radius) var(--mat-radius) 0 0; background: var(--mg-accent, var(--mat-app-accent)); }
+.mg-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--mat-space-4); }
+.mg-games .mat-card { overflow: hidden; }

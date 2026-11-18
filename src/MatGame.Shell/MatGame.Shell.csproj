@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The app shell of the games on Windows: a window with WebView2 that shows the game's browser part from embedded files, the bridge
+    (app / storage / secure / local, MatGame docs/PROTOCOL.md "Bridge"), the offline game (MatGame.Local.ILocalGame), self-installation per user
+    and updates from the game's GitHub releases (the ThixClip pattern). A game's app project (BunnyWarfare.App, KingBee.App) references this and
+    calls ShellApp.Run. MAUI (mobile) will speak the same bridge later.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- builds on the Linux runners too (the solution build); runs on Windows only -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>MatGame.Shell</RootNamespace>
+    <AssemblyName>MatGame.Shell</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MatGame.Local\MatGame.Local.csproj" />
+  </ItemGroup>
+
+  <Import Project="MatGame.Shell.targets" />
+
+</Project>

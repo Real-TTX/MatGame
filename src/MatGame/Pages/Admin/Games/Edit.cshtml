@@ -1,0 +1,21 @@
+@page "/Admin/Games/Edit"
+@model MatGame.Pages.Admin.Games.EditModel
+@{
+    var name = Model.Game?.Info.Name ?? Model.Id;
+    ViewData["Title"] = name;
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Spiele", "/Admin/Games"), (name, null) };
+    ViewData["Width"] = "narrow";
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__body mat-form">
+            <md-field name="IsEnabled" kind="switch" label="Spiel an" value="@Model.IsEnabled.ToString()"
+                      hint="Aus: verschwindet aus dem Portal, seine Adressen antworten mit „abgeschaltet“, die Apps spielen nur noch offline." />
+            <md-field name="MinClient" label="Mindestens App-Version" value="@Model.MinClient" optional="true" mono="true" maxlength="40"
+                      hint="@($"Ältere Apps müssen sich aktualisieren, bevor sie online spielen. Leer: die des Spiels ({Model.Game?.Info.MinClient ?? "jede"}).")" />
+        </div>
+    </div>
+    <md-buttons save="Speichern" back="/Admin/Games" />
+</form>

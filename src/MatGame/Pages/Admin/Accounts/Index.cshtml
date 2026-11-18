@@ -1,0 +1,48 @@
+@page "/Admin/Accounts"
+@model MatGame.Pages.Admin.Accounts.IndexModel
+@{
+    ViewData["Title"] = "Konten";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Konten", null) };
+}
+
+<div class="mat-list">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_Empty" model="@(new EmptyStateModel("users", Model.Toolbar.Total == 0 ? "Noch keine Konten" : "Kein Konto gefunden", Model.Toolbar.Total == 0 ? "Lege das erste an." : "Ändere die Suche oder die Filter.", Model.Toolbar.Total == 0, "/Admin/Accounts/Edit", "Neues Konto", Model.Toolbar.UrlReset()))" />
+    }
+    else
+    {
+        <md-table caption="Konten">
+            <thead>
+                <tr><th scope="col">Konto</th><th scope="col">Art</th><th scope="col">Status</th><th scope="col" class="mat-num mat-hide-sm">Geräte</th><th scope="col" class="mat-hide-sm">Letzte Anmeldung</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Items)
+                {
+                    <tr>
+                        <td data-label="Konto"><div class="mat-table__name"><span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(a.DisplayName)</span><span><a href="/Admin/Accounts/Edit?id=@a.Id">@a.DisplayName</a><small class="mat-mono">@a.LoginName</small></span></div></td>
+                        <td data-label="Art">
+                            <span class="mat-pill @(a.IsAdmin ? "mat-pill--accent" : a.IsGuest ? "mat-pill--warn" : "mat-pill--plain")">@(a.IsAdmin ? "Administrator" : a.IsGuest ? "Gast" : "Spieler")</span>
+                            @if (a.Linked)
+                            {
+                                <span class="mat-pill mat-pill--info">MatIdentity</span>
+                            }
+                        </td>
+                        <td data-label="Status">@if (a.IsActive) { <span class="mat-pill mat-pill--ok">Aktiv</span> } else { <span class="mat-pill mat-pill--error">Gesperrt</span> }</td>
+                        <td data-label="Geräte" class="mat-num mat-mono mat-hide-sm">@a.Devices</td>
+                        <td data-label="Letzte Anmeldung" class="mat-mono mat-hide-sm">@Ui.Stamp(a.LastLoginDate)</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Admin/Accounts/Edit?id=@a.Id" aria-label="@a.DisplayName bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+
+    <partial name="_Pager" model="Model.Pager" />
+
+    <div class="mat-actions">
+        <a class="mat-btn mat-btn--primary" href="/Admin/Accounts/Edit">@Ui.Icon("plus")<span>Neues Konto</span></a>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+# MatGame - Local (builds the image from this folder and the sibling repositories ../BunnyWarfare and ../KingBee) with pgAdmin
+#   ./scripts/redeploy.ps1              (rebuilds and starts the stack: the way to test every change of MatGame and of the games)
+#   docker compose -f docker-compose.local.yml up -d --build
+#   App:      http://localhost:2770
+#   pgAdmin:  http://localhost:2771   (no sign-in; database password: matgame)
+#   Postgres: localhost:2775          (for "dotnet run" outside Docker, see appsettings.Development.json)
+name: matgame-local
+
+services:
+  web:
+    build:
+      context: .
+      additional_contexts:
+        bunnywarfare: ../BunnyWarfare
+        kingbee: ../KingBee
+      args:
+        GAMES: all
+    image: matgame:local
+    restart: unless-stopped
+    ports:
+      - "2770:2770"
+    volumes:
+      - web-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "2775:5432"
+    environment:
+      POSTGRES_DB: matgame
+      POSTGRES_USER: matgame
+      POSTGRES_PASSWORD: matgame
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matgame -d matgame"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    ports:
+      - "2771:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@matgame.example.com
+      PGADMIN_DEFAULT_PASSWORD: matgame
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    configs:
+      - source: servers
+        target: /pgadmin4/servers.json
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+configs:
+  servers:
+    content: |
+      {"Servers": {"1": {"Name": "MatGame (local)", "Group": "Servers", "Host": "db", "Port": 5432, "MaintenanceDB": "matgame", "Username": "matgame", "SSLMode": "prefer"}}}
+
+volumes:
+  web-data:
+  db-data:
+  pgadmin-data:

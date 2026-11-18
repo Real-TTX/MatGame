@@ -1,0 +1,13 @@
+<Project>
+
+  <!--
+    Imported by MatGame.Shell and by every game's app project (<Import Project="..\..\..\MatGame\src\MatGame.Shell\MatGame.Shell.targets" />):
+    the WebView2 package always references its WPF assembly, which clashes with WindowsBase in a Windows Forms app (MSB3277). The shell uses WinForms only.
+  -->
+  <Target Name="MatGameDropWebView2Wpf" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

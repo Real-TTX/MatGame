@@ -1,0 +1,46 @@
+@page "/Admin/Devices"
+@model MatGame.Pages.Admin.Devices.IndexModel
+@{
+    ViewData["Title"] = "Geräte";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Geräte", null) };
+    ViewData["PageSub"] = "Angemeldete Apps. Abmelden nimmt dem Gerät sein Token; die App muss sich neu anmelden.";
+}
+
+<div class="mat-list">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_Empty" model="@(new EmptyStateModel("smartphone", Model.Toolbar.Total == 0 ? "Noch keine Geräte" : "Kein Gerät gefunden", Model.Toolbar.Total == 0 ? "Sobald sich eine App anmeldet, steht sie hier." : "Ändere die Suche oder die Filter.", false, null, null, Model.Toolbar.Total == 0 ? null : Model.Toolbar.UrlReset()))" />
+    }
+    else
+    {
+        <md-table caption="Geräte">
+            <thead>
+                <tr><th scope="col">Gerät</th><th scope="col">Konto</th><th scope="col" class="mat-hide-sm">Spiel</th><th scope="col" class="mat-hide-sm">Angemeldet</th><th scope="col">Zuletzt</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Items)
+                {
+                    <tr>
+                        <td data-label="Gerät"><div class="mat-table__name">@Ui.Icon(d.Platform is "android" or "ios" ? "smartphone" : "monitor")<span>@d.Name<small class="mat-mono">@d.Platform</small></span></div></td>
+                        <td data-label="Konto"><a href="/Admin/Accounts/Edit?id=@d.AccountId">@d.AccountName</a></td>
+                        <td data-label="Spiel" class="mat-hide-sm mat-mono">@d.Game</td>
+                        <td data-label="Angemeldet" class="mat-mono mat-hide-sm">@Ui.Stamp(d.CreateDate)</td>
+                        <td data-label="Zuletzt" class="mat-mono">@Ui.Stamp(d.LastUsedDate)</td>
+                        <td class="mat-table__cell-actions">
+                            <div class="mat-table__actions">
+                                <form method="post" asp-page-handler="Remove" asp-route-id="@d.Id">
+                                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" aria-label="@d.Name abmelden" data-tip="Abmelden"
+                                            data-confirm="@($"{d.Name} von {d.AccountName} abmelden?")" data-confirm-ok="Abmelden">@Ui.Icon("logout")</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+
+    <partial name="_Pager" model="Model.Pager" />
+</div>

@@ -74,7 +74,9 @@ public static class GameApi
     {
         var http = context.HttpContext;
         var change = !HttpMethods.IsGet(http.Request.Method) && !HttpMethods.IsHead(http.Request.Method) && !HttpMethods.IsOptions(http.Request.Method);
-        var app = http.Request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase);
+        // an app: a bearer token, or (before it has one: sign-in, device link) the client header; it never sends the browser's cookie (credentials: omit)
+        var app = http.Request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                  || (!string.IsNullOrEmpty(http.Request.Headers[MatGameProtocol.ClientHeader]) && !http.User.Identities.Any(i => i.AuthenticationType == GameAccounts.CookieScheme));
         if (change && !app)
         {
             var antiforgery = http.RequestServices.GetRequiredService<IAntiforgery>();

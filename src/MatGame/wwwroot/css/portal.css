@@ -1,0 +1,164 @@
+/* MatGame – the portal (player-facing, the cartoon look of the games: Lilita One + Nunito, cream paper, thick brown outlines, chunky buttons). Not MatUi. */
+
+@font-face { font-family: "Lilita One"; src: url("/fonts/lilita-one-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("/fonts/nunito-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("/fonts/nunito-latin-800-normal.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("/fonts/nunito-latin-900-normal.woff2") format("woff2"); font-weight: 900; font-display: swap; }
+
+:root {
+  --mg-ink: #4a2c14;
+  --mg-paper: #fff4dc;
+  --mg-paper-2: #ffe9bf;
+  --mg-line: #5b3a1e;
+  --mg-violet: #6d28d9;
+  --mg-violet-dark: #4c1d95;
+  --mg-carrot: #f97316;
+  --mg-danger: #c62828;
+  --mg-radius: 22px;
+  --mg-shadow: 0 6px 0 var(--mg-line);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body.mg-portal {
+  font: 600 16px/1.45 "Nunito", system-ui, sans-serif;
+  color: var(--mg-ink);
+  background: linear-gradient(180deg, #7cc4ff 0%, #b9e2ff 38%, #ffe7b8 78%, #ffd28a 100%) fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* drifting clouds behind everything */
+.mg-sky { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.mg-cloud { position: absolute; width: 220px; height: 70px; background: #fff; border-radius: 60px; opacity: 0.85; filter: drop-shadow(0 6px 0 rgba(91, 58, 30, 0.12)); animation: mg-drift 70s linear infinite; }
+.mg-cloud::before, .mg-cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+.mg-cloud::before { width: 100px; height: 100px; top: -50px; left: 30px; }
+.mg-cloud::after { width: 80px; height: 80px; top: -36px; left: 110px; }
+.mg-cloud--1 { top: 12%; left: -240px; }
+.mg-cloud--2 { top: 30%; left: -240px; transform: scale(0.7); animation-duration: 95s; animation-delay: -40s; }
+.mg-cloud--3 { top: 6%; left: -240px; transform: scale(0.5); animation-duration: 120s; animation-delay: -80s; }
+@keyframes mg-drift { to { translate: calc(100vw + 480px) 0; } }
+@media (prefers-reduced-motion: reduce) { .mg-cloud { animation: none; left: 10%; } }
+
+.mg-top, .mg-main, .mg-foot { position: relative; z-index: 1; }
+
+/* ---- top bar ---- */
+.mg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px clamp(14px, 3vw, 36px); }
+.mg-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--mg-ink); min-width: 0; }
+.mg-brand img { flex: none; filter: drop-shadow(0 3px 0 var(--mg-line)); }
+.mg-brand__name { font: 400 clamp(1.3rem, 2.6vw, 1.9rem)/1 "Lilita One", sans-serif; color: #fff; -webkit-text-stroke: 1.5px var(--mg-line); paint-order: stroke fill; text-shadow: 0 3px 0 var(--mg-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-top__actions { display: flex; align-items: center; gap: 10px; }
+
+/* ---- buttons ---- */
+.mg-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; min-height: 46px;
+  font: 400 1.1rem/1 "Lilita One", sans-serif; letter-spacing: 0.02em;
+  color: var(--mg-ink); background: var(--mg-paper);
+  border: 3px solid var(--mg-line); border-radius: 16px; box-shadow: 0 4px 0 var(--mg-line);
+  text-decoration: none; cursor: pointer; transition: transform 0.08s, box-shadow 0.08s;
+}
+.mg-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--mg-line); }
+.mg-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--mg-line); }
+.mg-btn:focus-visible, .mg-chip:focus-visible, .mg-tab:focus-visible, .mg-field input:focus-visible { outline: 3px solid var(--mg-violet); outline-offset: 2px; }
+.mg-btn--primary { background: var(--mg-carrot); color: #fff; -webkit-text-stroke: 0.6px var(--mg-line); paint-order: stroke fill; }
+.mg-btn--ghost { background: rgba(255, 244, 220, 0.75); }
+.mg-btn--danger { background: #ffd9d4; color: var(--mg-danger); }
+.mg-btn--small { min-height: 36px; padding: 6px 12px; font-size: 0.95rem; border-radius: 12px; box-shadow: 0 3px 0 var(--mg-line); }
+.mg-btn--wide { width: 100%; }
+.mg-btn[disabled], .mg-btn.is-disabled { opacity: 0.6; cursor: default; transform: none; box-shadow: 0 4px 0 var(--mg-line); }
+
+.mg-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 4px; background: var(--mg-paper); border: 3px solid var(--mg-line); border-radius: 999px; box-shadow: 0 4px 0 var(--mg-line); font: 800 1rem "Nunito", sans-serif; color: var(--mg-ink); cursor: pointer; max-width: 60vw; }
+.mg-chip__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-avatar { display: inline-grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--mg-violet); color: #fff; font: 400 1rem "Lilita One", sans-serif; border: 2px solid var(--mg-line); }
+.mg-avatar--lg { width: 64px; height: 64px; font-size: 1.6rem; border-width: 3px; }
+
+/* ---- hero and the game cards ---- */
+.mg-main { flex: 1; width: min(1180px, 100%); margin: 0 auto; padding: 8px clamp(14px, 3vw, 36px) 40px; }
+.mg-hero { text-align: center; margin: 10px 0 26px; }
+.mg-hero h1 { margin: 0 0 6px; font: 400 clamp(2rem, 5vw, 3.4rem)/1.05 "Lilita One", sans-serif; color: #fff; -webkit-text-stroke: 2.5px var(--mg-line); paint-order: stroke fill; text-shadow: 0 5px 0 var(--mg-line); }
+.mg-hero p { margin: 0 auto; max-width: 52ch; font-weight: 800; color: var(--mg-ink); }
+
+.mg-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 26px; }
+.mg-card { display: flex; flex-direction: column; background: var(--mg-paper); border: 4px solid var(--mg-line); border-radius: var(--mg-radius); box-shadow: var(--mg-shadow); overflow: hidden; transition: transform 0.15s; }
+.mg-card:hover { transform: translateY(-3px) rotate(-0.4deg); }
+.mg-card.is-off { filter: grayscale(0.8); }
+.mg-card__cover { position: relative; aspect-ratio: 16 / 9; background: radial-gradient(120% 120% at 20% 10%, color-mix(in srgb, var(--mg-accent) 55%, #fff), var(--mg-accent)); border-bottom: 4px solid var(--mg-line); display: grid; place-items: center; }
+.mg-card__cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mg-card__initial { font: 400 5rem/1 "Lilita One", sans-serif; color: #fff; -webkit-text-stroke: 3px var(--mg-line); paint-order: stroke fill; text-shadow: 0 6px 0 var(--mg-line); }
+.mg-badge { position: absolute; top: 10px; right: 10px; padding: 4px 12px; background: #ffd23f; border: 3px solid var(--mg-line); border-radius: 999px; font: 400 0.95rem "Lilita One", sans-serif; box-shadow: 0 3px 0 var(--mg-line); }
+.mg-card__body { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px 18px; flex: 1; }
+.mg-card__title { margin: 0; font: 400 1.7rem/1.1 "Lilita One", sans-serif; color: var(--mg-ink); }
+.mg-card__text { margin: 0; flex: 1; }
+.mg-card__stats { display: flex; gap: 14px; margin: 0 0 6px; font-size: 0.92rem; }
+.mg-card__stats b { font-weight: 900; color: var(--mg-violet-dark); }
+
+.mg-apps { margin-top: 34px; padding: 18px 22px; background: rgba(255, 244, 220, 0.85); border: 3px dashed var(--mg-line); border-radius: var(--mg-radius); }
+.mg-apps h2 { margin: 0 0 4px; font: 400 1.4rem "Lilita One", sans-serif; }
+.mg-apps p { margin: 0; }
+.mg-apps code { font: 800 0.95rem ui-monospace, Consolas, monospace; background: var(--mg-paper-2); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+
+.mg-foot { display: flex; justify-content: space-between; gap: 12px; padding: 14px clamp(14px, 3vw, 36px); font-size: 0.9rem; font-weight: 800; }
+.mg-foot a { color: var(--mg-ink); }
+
+/* ---- panels (sign-in, profile, the device page) ---- */
+.mg-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 16px; background: rgba(43, 26, 74, 0.45); backdrop-filter: blur(3px); overflow-y: auto; }
+.mg-overlay[hidden] { display: none; }
+.mg-panel { position: relative; width: min(460px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 24px 24px 22px; background: var(--mg-paper); border: 4px solid var(--mg-line); border-radius: var(--mg-radius); box-shadow: var(--mg-shadow); }
+.mg-profile { width: min(560px, 100%); }
+.mg-close { position: absolute; top: 10px; right: 12px; width: 38px; height: 38px; border: 3px solid var(--mg-line); border-radius: 50%; background: var(--mg-paper-2); font: 400 1.4rem/1 "Lilita One", sans-serif; color: var(--mg-ink); cursor: pointer; box-shadow: 0 3px 0 var(--mg-line); }
+.mg-title { margin: 0 44px 8px 0; font: 400 1.7rem/1.1 "Lilita One", sans-serif; }
+.mg-sub { margin: 20px 0 8px; font: 400 1.15rem "Lilita One", sans-serif; }
+.mg-note { margin: 0 0 12px; font-size: 0.95rem; }
+
+.mg-tabs { display: flex; gap: 6px; margin: 6px 0 16px; padding: 4px; background: var(--mg-paper-2); border: 3px solid var(--mg-line); border-radius: 16px; }
+.mg-tab { flex: 1; padding: 8px 6px; border: 0; border-radius: 11px; background: transparent; font: 400 1rem "Lilita One", sans-serif; color: var(--mg-ink); cursor: pointer; }
+.mg-tab[aria-selected="true"] { background: var(--mg-violet); color: #fff; box-shadow: inset 0 -3px 0 var(--mg-violet-dark); }
+
+.mg-form { display: grid; gap: 12px; }
+.mg-form[hidden] { display: none; }
+.mg-form--row { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+.mg-form--row .mg-error { grid-column: 1 / -1; }
+.mg-field { display: grid; gap: 4px; font-weight: 800; }
+.mg-field input { width: 100%; padding: 11px 13px; font: 700 1rem "Nunito", sans-serif; color: var(--mg-ink); background: #fff; border: 3px solid var(--mg-line); border-radius: 12px; }
+.mg-field input[aria-invalid="true"] { border-color: var(--mg-danger); background: #fff1ef; }
+.mg-field small { font-weight: 600; font-size: 0.82rem; opacity: 0.8; }
+.mg-error { margin: 0; padding: 8px 12px; background: #ffd9d4; border: 2px solid var(--mg-danger); border-radius: 10px; color: var(--mg-danger); font-weight: 800; }
+.mg-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.mg-profile__head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.mg-profile__head .mg-title { margin-bottom: 2px; }
+.mg-profile__head .mg-note { margin: 0; }
+.mg-profile__foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.mg-levels, .mg-devices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mg-levels li { display: flex; align-items: baseline; gap: 10px; padding: 8px 12px; border: 3px solid var(--mg-line); border-left: 12px solid var(--mg-accent, var(--mg-violet)); border-radius: 12px; background: #fff; }
+.mg-levels li span { flex: 1; font-weight: 900; }
+.mg-levels li small { opacity: 0.8; }
+.mg-devices li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px 8px 12px; border: 3px solid var(--mg-line); border-radius: 12px; background: #fff; }
+.mg-devices li span { display: grid; min-width: 0; }
+.mg-devices li small { font-weight: 600; opacity: 0.8; }
+
+/* ---- the device page, the off page, about ---- */
+.mg-center { position: relative; z-index: 1; flex: 1; display: grid; place-items: center; padding: 20px 16px 40px; }
+.mg-code { font: 400 2.2rem/1 "Lilita One", sans-serif; letter-spacing: 0.12em; text-align: center; padding: 12px; margin: 6px 0 12px; background: #fff; border: 3px dashed var(--mg-line); border-radius: 14px; }
+.mg-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+.mg-buttons > * { flex: 1; }
+.mg-off { position: relative; z-index: 1; min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.mg-ok { padding: 10px 12px; background: #dcfce7; border: 2px solid #15803d; border-radius: 10px; color: #14532d; font-weight: 800; }
+.mg-kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+.mg-kv dt { font-weight: 900; }
+.mg-kv dd { margin: 0; }
+
+.mg-toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 0; z-index: 20; padding: 10px 18px; background: var(--mg-ink); color: #fff; border-radius: 14px; font-weight: 800; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+.mg-toast[hidden] { display: none; }
+
+@media (max-width: 640px) {
+  .mg-hide-sm { display: none; }
+  .mg-panel { padding: 20px 16px 18px; }
+  .mg-form--row { grid-template-columns: minmax(0, 1fr); }
+  .mg-foot { flex-direction: column; align-items: center; text-align: center; }
+}
+
+.mg-stack { display: grid; gap: 14px; justify-items: center; width: min(460px, 100%); }
+.mg-hero-note { margin: 0; font: 400 1.4rem/1.2 "Lilita One", sans-serif; color: #fff; -webkit-text-stroke: 1.5px var(--mg-line); paint-order: stroke fill; text-shadow: 0 3px 0 var(--mg-line); text-align: center; }

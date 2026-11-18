@@ -1,0 +1,22 @@
+@page "/About"
+@inject GameHost Host
+@{
+    Layout = "_PortalLayout";
+    ViewData["Title"] = "Über MatGame";
+}
+<main class="mg-center">
+    <section class="mg-panel">
+        <h1 class="mg-title">Über MatGame</h1>
+        <p class="mg-note">Der Server der Mat-Spiele: Portal, Konten und die Online-Partien aller Spiele unter einer Adresse.</p>
+        <dl class="mg-kv">
+            <dt>Version</dt><dd>@AppInfo.Version</dd>
+            <dt>Protokoll</dt><dd>@MatGameProtocol.Version</dd>
+            <dt>Läuft seit</dt><dd>@Ui.Stamp(AppInfo.Started)</dd>
+            @foreach (var g in Host.Games)
+            {
+                <dt>@g.Info.Name</dt><dd>@g.Info.Version (Protokoll @g.Info.Protocol)</dd>
+            }
+        </dl>
+        <p><a class="mg-btn mg-btn--wide" href="/">Zu den Spielen</a></p>
+    </section>
+</main>

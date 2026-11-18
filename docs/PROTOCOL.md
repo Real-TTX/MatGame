@@ -22,7 +22,8 @@ Errors: `400 { error, field }` (a rule, field camelCase or null), `401` not sign
 
 - Every request carries `X-MatGame-Protocol: 1` and `X-MatGame-Client: <game>/<version> (<platform>)` (platform `windows`, `android`, `ios`, `macos`).
   A hub connection carries them as query values `mgp` and `mgc`, and the token as `access_token` (SignalR's way for WebSockets).
-- Signed in with `Authorization: Bearer <device token>`; no cookies (`credentials: 'omit'`), so no antiforgery token. CORS allows any origin for `/api/...`,
+- Signed in with `Authorization: Bearer <device token>`; no cookies (`credentials: 'omit'`), so no antiforgery token. Before it has a token (sign-in, guest,
+  device link) an app is recognised by `X-MatGame-Client` without the browser's cookie: no antiforgery token either (`GameApi.ForGame`). CORS allows any origin for `/api/...`,
   `/<game>/api/...`, `/<game>/hub` and the discovery (policy `MatGame.Apps`, no credentials).
 - The browser on the master uses the cookie `matgame.auth` and sends the antiforgery token (from `GET /api/matgame/session`) in `RequestVerificationToken` with every change.
 
@@ -56,6 +57,8 @@ Account in every answer: `{ id, name, loginName, isAdmin, isGuest }`.
 | `POST /account/upgrade` | `{ displayName, loginName, password }` | session (the guest becomes an account, same id) |
 | `PUT /account` | `{ displayName }` | session |
 | `POST /account/password` | `{ currentPassword, newPassword }` | `{ ok }` |
+| `GET /account/devices` | – | `[{ id, name, platform, game, createDate, lastUsedDate, current }]` |
+| `DELETE /account/devices/{id}` | – | `{ ok }` (signs the device out) |
 | `POST /token` | `{ loginName, password, device: { name, platform, game } }` | `{ token, account }` (app) |
 | `POST /token/register` | `{ displayName, loginName, password, device }` | `{ token, account }` |
 | `POST /token/guest` | `{ name, device }` | `{ token, account }` |
@@ -67,11 +70,20 @@ Account in every answer: `{ id, name, loginName, isAdmin, isGuest }`.
 Device tokens: 32 random bytes (base64url), stored as SHA-256, one per device, valid until revoked (unused for 180 days = expired). Guests: name of their choice
 (2–24 characters, "(Gast)" is shown after it), no password, no ranking; the admin can switch guests off.
 
+## Version check and switched-off games
+
+Before a game's routes the host checks every script request (`/<game>/api/...`, `/<game>/hub`): an app below the game's minimum (the plugin's
+`GameInfo.MinClient`, or the administration's override) or with another platform protocol gets `426 { error, update: true }`; a game switched off by the
+administration answers `404 { error, off: true }` (pages: a friendly "abgeschaltet" page). A nightly or local app is never held back by the minimum.
+
 ## The plugins (`MatGame.Sdk.IGameModule`)
 
 See `src/MatGame.Sdk/GameModule.cs`. A plugin maps under `/<game>`: its web client, `/api` (with `GameApi.ForGame(Info)`: version check, antiforgery for cookie requests,
 CORS) and `/hub`. It reads the account with `HttpContext.User.ToAccount()` (`GameAccount`: id, name, isAdmin, isGuest) and keeps its own data per account id in
-its schema. Its admin pages are Razor pages under `Pages/Admin/<Game>/` that use the host's layout `_Layout` and the admin kit of `MatGame.Sdk`.
+its schema. Its admin pages are Razor pages under `Pages/Admin/<Game>/`: the host's `_ViewStart` and admin `_Layout` apply at run time, but the views are compiled
+in the plugin, so it needs its own `Pages/_ViewImports.cshtml` (`@addTagHelper *, MatGame.Sdk` for md-field, md-buttons, md-table, md-tabs; the partials
+`_Toolbar`, `_Pager`, `_FormSummary`, `_Empty` come from the SDK). Extra icons: `wwwroot/img/admin-icons.svg` (symbols `mat-i-…`) is added to the admin sprite;
+extra admin CSS through the section `Head`. Static files: `StaticWebAssetBasePath` = the game id (served at `/<game>/...`).
 
 ## Bridge (app shell ↔ browser part)
 

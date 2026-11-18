@@ -1,0 +1,14 @@
+@page "/Admin/Sample"
+@model MatGame.Tests.SampleGame.Pages.Admin.Sample.IndexModel
+@{
+    ViewData["Title"] = "Beispiel";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Beispiel", null) };
+}
+<form class="mat-form" method="post" novalidate>
+    <div class="mat-card">
+        <div class="mat-card__body mat-form" id="sample-admin">
+            <md-field name="Greeting" label="Gruß" value="@Model.Greeting" />
+        </div>
+    </div>
+    <md-buttons save="Speichern" back="/Admin" />
+</form>

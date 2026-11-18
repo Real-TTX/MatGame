@@ -22,7 +22,11 @@ public static class GameAccounts
     /// <summary>The bearer scheme of the apps (device tokens).</summary>
     public const string TokenScheme = "MatGameToken";
 
-    /// <summary>The policy that lets in a cookie or a token (the host's fallback policy).</summary>
+    /// <summary>
+    /// Cookie or token: the host's policy scheme (picks the token scheme for a bearer token or a hub's <c>access_token</c>, else the cookie) and an
+    /// authorization policy of the same name (a signed-in account or guest). Hubs: <c>RequireAuthorization(AnyScheme)</c> or
+    /// <c>[Authorize(AuthenticationSchemes = AnyScheme)]</c>.
+    /// </summary>
     public const string AnyScheme = "MatGame.Any";
 
     /// <summary>The role of administrators.</summary>

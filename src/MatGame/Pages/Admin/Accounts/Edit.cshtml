@@ -1,0 +1,83 @@
+@page "/Admin/Accounts/Edit"
+@model MatGame.Pages.Admin.Accounts.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Neues Konto" : Model.DisplayName;
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", "/Admin"), ("Konten", "/Admin/Accounts"), (Model.IsNew ? "Neu" : Model.DisplayName, null) };
+    ViewData["Width"] = "narrow";
+    var tab = Model.Tab;
+    var guest = Model.Current?.IsGuest == true;
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+
+    <div data-tabs>
+        <md-tab-group label="Bereiche des Kontos">
+            <md-tab-button panel="account-general" icon="user" active="@(tab == "general")">Allgemein</md-tab-button>
+            <md-tab-button panel="account-security" icon="lock" active="@(tab == "security")">Sicherheit</md-tab-button>
+            @if (!Model.IsNew)
+            {
+                <md-tab-button panel="account-info" icon="info" active="@(tab == "info")">Details</md-tab-button>
+            }
+        </md-tab-group>
+
+        <md-tab-panel id="account-general" active="@(tab == "general")">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    <md-field name="DisplayName" label="Name" required value="@Model.DisplayName" maxlength="60" />
+                    @if (guest)
+                    {
+                        <input type="hidden" name="LoginName" value="@Model.LoginName" />
+                        <p class="mat-muted">Ein Gast meldet sich nicht mit Namen an (@Model.LoginName).</p>
+                    }
+                    else
+                    {
+                        <md-field name="LoginName" label="Anmeldename" required value="@Model.LoginName" maxlength="40" autocomplete="off" mono="true" />
+                    }
+                </div>
+            </div>
+        </md-tab-panel>
+
+        <md-tab-panel id="account-security" active="@(tab == "security")">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    @if (!guest)
+                    {
+                        <md-field name="IsAdmin" kind="switch" label="Administrator" value="@Model.IsAdmin.ToString()" hint="Darf die Administration von MatGame und allen Spielen benutzen." />
+                    }
+                    <md-field name="IsActive" kind="switch" label="Darf sich anmelden" value="@Model.IsActive.ToString()" />
+                    @if (!guest)
+                    {
+                        <md-field name="Password" kind="password" label="@(Model.IsNew ? "Passwort" : "Neues Passwort")" required="@Model.IsNew" optional="@(!Model.IsNew)" autocomplete="new-password"
+                                  hint="@(Model.IsNew ? $"Mindestens {AccountLogic.PasswordMinLength} Zeichen." : "Leer lassen, um das Passwort zu behalten.")" />
+                    }
+                </div>
+            </div>
+        </md-tab-panel>
+
+        @if (Model.Current is { } c)
+        {
+            <md-tab-panel id="account-info" active="@(tab == "info")">
+                <div class="mat-card">
+                    <div class="mat-card__body">
+                        <dl class="mat-kv">
+                            <dt>Art</dt><dd>@(c.IsGuest ? "Gast" : c.IsAdmin ? "Administrator" : "Spieler")</dd>
+                            <dt>MatIdentity</dt><dd>@(c.IdentitySubject is null ? "nicht verknüpft" : "verknüpft")</dd>
+                            <dt>Letzte Anmeldung</dt><dd class="mat-mono">@Ui.Stamp(c.LastLoginDate)</dd>
+                            <dt>Angelegt</dt><dd class="mat-mono">@Ui.Stamp(c.CreateDate)</dd>
+                            <dt>Geändert</dt><dd class="mat-mono">@Ui.Stamp(c.UpdateDate)</dd>
+                            @foreach (var (game, profile) in Model.Profiles)
+                            {
+                                <dt>@game</dt>
+                                <dd>@(profile is null ? "noch nicht gespielt" : $"Level {profile.Level}" + (profile.Detail is null ? "" : $" · {profile.Detail}"))</dd>
+                            }
+                        </dl>
+                    </div>
+                </div>
+            </md-tab-panel>
+        }
+    </div>
+
+    <md-buttons save="@(Model.IsNew ? "Anlegen" : "Speichern")" back="/Admin/Accounts" delete-handler="@(Model.IsNew || Model.IsSelf ? null : "Delete")" delete-label="Löschen"
+                delete-confirm="@($"{Model.DisplayName} wirklich löschen? Die Geräte werden abgemeldet, die Spiele entfernen die Daten des Kontos.")" />
+</form>

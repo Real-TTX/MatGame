@@ -1,0 +1,58 @@
+@page "/Admin"
+@model MatGame.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Übersicht";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", null), ("Übersicht", null) };
+}
+
+<div class="mat-stats">
+    <a class="mat-stat" href="/Admin/Accounts">
+        <span class="mat-stat__label">@Ui.Icon("users") Konten</span>
+        <span class="mat-stat__value">@Model.Accounts</span>
+        <span class="mat-stat__delta">@Model.Guests Gäste</span>
+    </a>
+    <a class="mat-stat" href="/Admin/Devices">
+        <span class="mat-stat__label">@Ui.Icon("smartphone") Geräte</span>
+        <span class="mat-stat__value">@Model.Devices</span>
+        <span class="mat-stat__delta">angemeldete Apps</span>
+    </a>
+    <div class="mat-stat">
+        <span class="mat-stat__label">@Ui.Icon("activity") Spieler online</span>
+        <span class="mat-stat__value">@Model.Games.Sum(g => g.Stats.PlayersOnline)</span>
+        <span class="mat-stat__delta">in allen Spielen</span>
+    </div>
+    <div class="mat-stat">
+        <span class="mat-stat__label">@Ui.Icon("play") Laufende Partien</span>
+        <span class="mat-stat__value">@Model.Games.Sum(g => g.Stats.RunningMatches)</span>
+        <span class="mat-stat__delta">@Model.Games.Count(g => g.State.IsEnabled) von @Model.Games.Count Spielen an</span>
+    </div>
+</div>
+
+<section class="mat-card mg-gap">
+    <div class="mat-card__head"><h2 class="mat-card__title">Spiele</h2></div>
+    @if (Model.Games.Count == 0)
+    {
+        <div class="mat-card__body"><p class="mat-muted">Dieser Server hat noch kein Spiel (MATGAME_GAMES oder der Build ohne Spiele).</p></div>
+    }
+    else
+    {
+        <md-table caption="Spiele">
+            <thead>
+                <tr><th scope="col">Spiel</th><th scope="col">Status</th><th scope="col" class="mat-num">Online</th><th scope="col" class="mat-num">Partien</th><th scope="col" class="mat-hide-sm">Version</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var g in Model.Games)
+                {
+                    <tr>
+                        <td data-label="Spiel"><div class="mat-table__name">@Ui.Swatch(g.State.Info.Accent)<span><a href="/Admin/Games/Edit?id=@g.State.Info.Id">@g.State.Info.Name</a><small class="mat-mono">/@g.State.Info.Id</small></span></div></td>
+                        <td data-label="Status">@if (g.State.IsEnabled) { <span class="mat-pill mat-pill--ok">An</span> } else { <span class="mat-pill mat-pill--error">Aus</span> }</td>
+                        <td data-label="Online" class="mat-num mat-mono">@g.Stats.PlayersOnline</td>
+                        <td data-label="Partien" class="mat-num mat-mono">@g.Stats.RunningMatches</td>
+                        <td data-label="Version" class="mat-mono mat-hide-sm">@g.State.Info.Version</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/@g.State.Info.Id/" aria-label="@g.State.Info.Name öffnen" data-tip="Öffnen">@Ui.Icon("external")</a></div></td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+</section>
