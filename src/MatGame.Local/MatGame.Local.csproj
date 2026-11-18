@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The offline contract between the app shell (MatGame.Shell) and a game's local side (BunnyWarfare.Local): no ASP.NET, no database. -->
+  <PropertyGroup>
+    <RootNamespace>MatGame.Local</RootNamespace>
+    <AssemblyName>MatGame.Local</AssemblyName>
+  </PropertyGroup>
+
+</Project>

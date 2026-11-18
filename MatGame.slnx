@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MatGame.Sdk/MatGame.Sdk.csproj" />
+    <Project Path="src/MatGame.Local/MatGame.Local.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    The contract between MatGame (the host) and the games (the plugins): IGameModule, the account of the request, the protocol, the API helpers,
+    and the admin kit (the MatUi tag helpers md-field / md-buttons / md-table / md-tabs, the partials _Toolbar, _Pager, _FormSummary) that the
+    host and the admin pages of every plugin share. The games reference this project from the sibling repository (../MatGame/src/MatGame.Sdk).
+  -->
+  <PropertyGroup>
+    <RootNamespace>MatGame.Sdk</RootNamespace>
+    <AssemblyName>MatGame.Sdk</AssemblyName>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <MatGameWebUsings>true</MatGameWebUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
