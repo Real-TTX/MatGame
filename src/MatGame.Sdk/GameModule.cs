@@ -63,7 +63,7 @@ public interface IGameModule
     /// </summary>
     void MapGame(IEndpointRouteBuilder game, GameEnvironment environment);
 
-    /// <summary>Its entries in the menu of <c>/Admin</c> (empty = none).</summary>
+    /// <summary>The entries of its own menu in <c>/Admin</c> (the menu switcher under the logo shows it; empty = no menu).</summary>
     IReadOnlyList<AdminLink> Admin { get; }
 
     /// <summary>Once at start, before the first request: migrate its schema, seed, close what the last run left open.</summary>

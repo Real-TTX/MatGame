@@ -14,8 +14,14 @@
     bool Under(string prefix) => path.Equals(prefix, StringComparison.OrdinalIgnoreCase) || path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase);
     string Cls(bool active) => "mat-nav__item" + (active ? " is-active" : string.Empty);
     string Cur(bool active) => active ? "page" : null!;
-    // in a game's group the entry with the longest matching address is the current one (its overview /Admin/<Game> is a prefix of the others)
+    // in a game's menu the entry with the longest matching address is the current one (its overview /Admin/<Game> is a prefix of the others)
     var gameActive = Games.Games.SelectMany(g => g.Module.Admin).Where(l => Under(l.Path)).OrderByDescending(l => l.Path.Length).FirstOrDefault()?.Path;
+    // the menus (SHELL-15): MatGame's own and one per game with admin pages; the switcher under the logo shows one at a time, the current page decides which
+    var gameMenus = Games.Games.Where(g => g.Module.Admin.Count > 0).ToList();
+    var currentMenu = gameMenus.FirstOrDefault(g => g.Module.Admin.Any(l => l.Path == gameActive))?.Info.Id ?? Ui.AppId;
+    var currentTitle = gameMenus.FirstOrDefault(g => g.Info.Id == currentMenu)?.Info.Name ?? Ui.AppName;
+    var currentIcon = currentMenu == Ui.AppId ? "layers" : "gamepad";
+    var hasSwitcher = gameMenus.Count > 0;
 }
 <!DOCTYPE html>
 <html lang="de" data-app="@Ui.AppId" data-dlg-ok="OK" data-dlg-cancel="Abbrechen" data-dlg-close="Schließen" data-dlg-confirm="Bestätigen" data-msg-required="Bitte ausfüllen.">
@@ -45,7 +51,19 @@
                 <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-nav__close" data-nav-close aria-label="Menü schließen">@Ui.Icon("x")</button>
             </div>
 
-            <nav class="mat-nav__scroll" aria-label="Administration">
+            @if (hasSwitcher)
+            {
+                <div class="mat-nav__switch">
+                    <button type="button" class="mat-switcher" data-menu-toggle="nav-switch-menu" data-menu-place="bottom" aria-haspopup="menu" aria-expanded="false">
+                        <span class="mat-switcher__icon">@Ui.Icon(currentIcon)</span>
+                        <span class="mat-switcher__text"><small data-nav-label="Menü">Menü</small><span class="mat-switcher__name">@currentTitle</span></span>
+                        @Ui.Icon("chevron-down", "mat-switcher__chev")
+                        <span class="mat-switcher__dot" hidden></span>
+                    </button>
+                </div>
+            }
+
+            <nav class="mat-nav__scroll" aria-label="@Ui.AppName" data-nav-panel="@Ui.AppId" hidden="@(currentMenu != Ui.AppId)">
                 <ul class="mat-nav__list">
                     <li><a class="mat-nav__item mat-nav__item--primary" href="/">@Ui.Icon("gamepad")<span>Zu den Spielen</span></a></li>
                     <li><a class="@Cls(path.Equals("/Admin", StringComparison.OrdinalIgnoreCase))" href="/Admin" aria-current="@Cur(path.Equals("/Admin", StringComparison.OrdinalIgnoreCase))">@Ui.Icon("dashboard")<span>Übersicht</span></a></li>
@@ -53,16 +71,21 @@
                     <li><a class="@Cls(Under("/Admin/Devices"))" href="/Admin/Devices" aria-current="@Cur(Under("/Admin/Devices"))">@Ui.Icon("smartphone")<span>Geräte</span></a></li>
                     <li><a class="@Cls(Under("/Admin/Games"))" href="/Admin/Games" aria-current="@Cur(Under("/Admin/Games"))">@Ui.Icon("gamepad")<span>Spiele</span></a></li>
                     <li><a class="@Cls(Under("/Admin/Settings"))" href="/Admin/Settings" aria-current="@Cur(Under("/Admin/Settings"))">@Ui.Icon("settings")<span>Einstellungen</span></a></li>
-                    @foreach (var game in Games.Games.Where(g => g.Module.Admin.Count > 0))
-                    {
-                        <li class="mat-nav__group" role="presentation">@game.Info.Name</li>
+                </ul>
+            </nav>
+
+            @foreach (var game in gameMenus)
+            {
+                <nav class="mat-nav__scroll" aria-label="@game.Info.Name" data-nav-panel="@game.Info.Id" hidden="@(currentMenu != game.Info.Id)">
+                    <ul class="mat-nav__list">
+                        <li><a class="mat-nav__item mat-nav__item--primary" href="/">@Ui.Icon("gamepad")<span>Zu den Spielen</span></a></li>
                         @foreach (var link in game.Module.Admin)
                         {
                             <li><a class="@Cls(link.Path == gameActive)" href="@link.Path" aria-current="@Cur(link.Path == gameActive)">@Ui.Icon(link.Icon)<span>@link.Title</span></a></li>
                         }
-                    }
-                </ul>
-            </nav>
+                    </ul>
+                </nav>
+            }
 
             <div class="mat-nav__foot">
                 <div class="mat-nav__account">
@@ -149,6 +172,22 @@
             <button type="submit" class="mat-menu__item mat-menu__item--danger" role="menuitem">@Ui.Icon("logout")<span>Abmelden</span></button>
         </form>
     </div>
+
+    @if (hasSwitcher)
+    {
+        @* the popup of the menu switcher: MatGame's menu, then one per game (each shows its panel in the menu, without loading a page) *@
+        <div class="mat-menu" id="nav-switch-menu" role="menu" aria-label="Menüs" data-nav-scope="mat-nav" hidden>
+            <button type="button" class="mat-menu__item" role="menuitemradio" aria-checked="@(currentMenu == Ui.AppId ? "true" : "false")" data-nav-set="@Ui.AppId" data-nav-title="@Ui.AppName">
+                @Ui.Icon("layers")<span>@Ui.AppName</span>@Ui.Icon("check", "mat-menu__check")
+            </button>
+            @foreach (var game in gameMenus)
+            {
+                <button type="button" class="mat-menu__item" role="menuitemradio" aria-checked="@(currentMenu == game.Info.Id ? "true" : "false")" data-nav-set="@game.Info.Id" data-nav-title="@game.Info.Name">
+                    @Ui.Icon("gamepad")<span>@game.Info.Name</span>@Ui.Icon("check", "mat-menu__check")
+                </button>
+            }
+        </div>
+    }
 
     @if (TempData["Flash"] is string flash)
     {

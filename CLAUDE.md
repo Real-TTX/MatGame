@@ -78,8 +78,8 @@ tests/MatGame.Tests     RulesTests, HostTests;  tests/MatGame.Tests.SampleGame: 
 
 - A Razor class library with `StaticWebAssetBasePath` = its id (its web client is served at `/<id>/...`), referencing `../MatGame/src/MatGame.Sdk`.
 - `IGameModule`: `Info` (id, name, tagline, version, protocol, min client, accent, cover, icon), `AddServices` (its DbContext on `GameEnvironment.ConnectionString`
-  with its own schema and migrations history in it), `MapGame` (on the group `/<id>`: web client, `/api` with `GameApi.ForGame(Info)`, `/hub`), `Admin` (menu
-  entries), `StartAsync` (migrate, seed, close stale), `StatsAsync`, `ProfileAsync`, `AccountDeletedAsync`.
+  with its own schema and migrations history in it), `MapGame` (on the group `/<id>`: web client, `/api` with `GameApi.ForGame(Info)`, `/hub`), `Admin` (the entries of the game's own menu in `/Admin`:
+  the switcher under the logo (MatUi SHELL-15) shows MatGame's menu or one game's, the current page decides), `StartAsync` (migrate, seed, close stale), `StatsAsync`, `ProfileAsync`, `AccountDeletedAsync`.
 - Accounts are the host's: read `HttpContext.User.ToAccount()`; keep the game's own row per account id. Hubs and APIs mark `[Authorize]` / `.RequireAuthorization()`
   themselves (the default scheme accepts the cookie and device tokens; hubs get the token as `access_token`). The apps call from another origin: the hub
   needs `.RequireCors(MatGameProtocol.AppCorsPolicy)` too (`ForGame` does it for the API group).
