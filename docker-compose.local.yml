@@ -14,6 +14,7 @@ services:
         bunnywarfare: ../BunnyWarfare
         kingbee: ../KingBee
         turbotoys: ../TurboToys
+        vectorwings: ../VectorWings
       args:
         GAMES: all
     image: matgame:local

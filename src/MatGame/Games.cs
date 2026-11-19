@@ -23,6 +23,9 @@ public static class Games
 #if GAME_TURBOTOYS
         yield return new TurboToys.TurboToysModule();
 #endif
+#if GAME_VECTORWINGS
+        yield return new VectorWings.Module.VectorWingsModule();
+#endif
         foreach (var module in Extra)
         {
             yield return module;

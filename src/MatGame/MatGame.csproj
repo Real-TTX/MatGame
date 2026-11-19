@@ -16,6 +16,8 @@
     <GameTurboToys Condition="'$(MatGameGames)' == 'all' Or $([System.String]::Copy(';$(MatGameGames);').Contains(';turbotoys;'))">true</GameTurboToys>
     <DefineConstants Condition="'$(GameBunnyWarfare)' == 'true'">$(DefineConstants);GAME_BUNNYWARFARE</DefineConstants>
     <DefineConstants Condition="'$(GameKingBee)' == 'true'">$(DefineConstants);GAME_KINGBEE</DefineConstants>
+    <GameVectorWings Condition="'$(MatGameGames)' == 'all' Or $([System.String]::Copy(';$(MatGameGames);').Contains(';vectorwings;'))">true</GameVectorWings>
+    <DefineConstants Condition="'$(GameVectorWings)' == 'true'">$(DefineConstants);GAME_VECTORWINGS</DefineConstants>
     <DefineConstants Condition="'$(GameTurboToys)' == 'true'">$(DefineConstants);GAME_TURBOTOYS</DefineConstants>
   </PropertyGroup>
 
@@ -33,6 +35,10 @@
 
   <ItemGroup Condition="'$(GameTurboToys)' == 'true'">
     <ProjectReference Include="..\..\..\TurboToys\src\TurboToys.Module\TurboToys.Module.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(GameVectorWings)' == 'true'">
+    <ProjectReference Include="../../../VectorWings/src/VectorWings.Module/VectorWings.Module.csproj" />
   </ItemGroup>
 
   <ItemGroup>

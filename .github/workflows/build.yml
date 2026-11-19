@@ -59,7 +59,7 @@ jobs:
           esac
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then channel=local; fi
           # MatGame and the games follow the branch when they have it, else main
-          for repo in MatGame BunnyWarfare KingBee TurboToys; do
+          for repo in MatGame BunnyWarfare KingBee TurboToys VectorWings; do
             if git ls-remote --exit-code --heads "https://github.com/${OWNER}/${repo}.git" "$branch" >/dev/null 2>&1; then ref="$branch"; else ref=main; fi
             echo "ref_$(echo "$repo" | tr '[:upper:]' '[:lower:]')=$ref" >> "$GITHUB_OUTPUT"
           done
@@ -93,6 +93,12 @@ jobs:
           ref: ${{ steps.ver.outputs.ref_turbotoys }}
           path: TurboToys
 
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.OWNER }}/VectorWings
+          ref: ${{ steps.ver.outputs.ref_vectorwings }}
+          path: VectorWings
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -104,6 +110,10 @@ jobs:
       # King Bee's browser part goes into its plugin (server/KingBee.Module/wwwroot) before the .NET build.
       - name: Build the browser part of King Bee
         working-directory: KingBee
+        run: npm ci && npm run build
+
+      - name: Build the browser part of VectorWings
+        working-directory: VectorWings
         run: npm ci && npm run build
 
       - name: Restore
@@ -191,6 +201,7 @@ jobs:
             bunnywarfare=BunnyWarfare
             kingbee=KingBee
             turbotoys=TurboToys
+            vectorwings=VectorWings
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           build-args: |

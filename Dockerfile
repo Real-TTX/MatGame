@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # MatGame with its games. The games come from the sibling repositories as named build contexts:
-#   docker build --build-context bunnywarfare=../BunnyWarfare --build-context kingbee=../KingBee --build-context turbotoys=../TurboToys -t matgame:local .
+#   docker build --build-context bunnywarfare=../BunnyWarfare --build-context kingbee=../KingBee --build-context turbotoys=../TurboToys --build-context vectorwings=../VectorWings -t matgame:local .
 # (docker-compose.local.yml and the CI pass them; the folder layout /src/MatGame, /src/BunnyWarfare, /src/KingBee, /src/TurboToys keeps the relative ProjectReferences).
 # GAMES chooses the games compiled in: "all" (default), "none", or a list like "bunnywarfare;kingbee" (MSBuild property MatGameGames).
 
@@ -22,6 +22,16 @@ RUN rm -rf node_modules && \
     fi && rm -rf node_modules
 
 # ---------------------------------------------------------------------------
+# VectorWings builds its Babylon.js client before .NET collects static assets.
+# ---------------------------------------------------------------------------
+FROM --platform=$BUILDPLATFORM node:24-alpine AS vectorwings-web
+ARG GAMES=all
+WORKDIR /src/VectorWings
+COPY sdk/js /src/MatGame/sdk/js
+COPY --from=vectorwings . .
+RUN if echo ";$GAMES;" | grep -Eq ";(all|vectorwings);"; then npm ci && npm run build; fi
+
+# ---------------------------------------------------------------------------
 # Build stage
 # ---------------------------------------------------------------------------
 # The build runs on the builder's own platform: the published app is portable (no native host), so the arm64 image needs no emulation here.
@@ -36,6 +46,8 @@ COPY . MatGame/
 COPY --from=bunnywarfare . BunnyWarfare/
 COPY --from=kingbee-web /src/KingBee KingBee/
 COPY --from=turbotoys . TurboToys/
+COPY --from=vectorwings . VectorWings/
+COPY --from=vectorwings-web /src/VectorWings/src/VectorWings.Module/wwwroot/ VectorWings/src/VectorWings.Module/wwwroot/
 # build output of a developer's machine (Windows paths in obj/) must never reach the restore
 RUN find . -type d \( -name bin -o -name obj -o -name node_modules -o -name .git \) -prune -exec rm -rf {} + && \
     dotnet restore "MatGame/src/MatGame/MatGame.csproj" -p:MatGameGames="$GAMES"
