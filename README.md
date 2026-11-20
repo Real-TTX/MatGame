@@ -61,9 +61,10 @@ Name des Servers, Registrierung, Gäste und eine neue Adresse (Domainwechsel) st
 | BunnyWarfare | [Real-TTX/BunnyWarfare](https://github.com/Real-TTX/BunnyWarfare) | `/bunnywarfare/` | `BunnyWarfare.Module` |
 | King Bee | [Real-TTX/KingBee](https://github.com/Real-TTX/KingBee) | `/kingbee/` | `KingBee.Module` |
 | TurboToys | [Real-TTX/TurboToys](https://github.com/Real-TTX/TurboToys) | `/turbotoys/` | `TurboToys.Module` |
+| VectorWings | [Real-TTX/VectorWings](https://github.com/Real-TTX/VectorWings) | `/vectorwings/` | `VectorWings.Module` |
 
 Die Spiele werden **aus den Nachbar-Repos** eingebaut: Alle Repos liegen nebeneinander (`Development/MatGame`, `Development/BunnyWarfare`,
-`Development/KingBee`, `Development/TurboToys`), lokal genauso wie in der CI und im Docker-Build.
+`Development/KingBee`, `Development/TurboToys`, `Development/VectorWings`), lokal genauso wie in der CI und im Docker-Build.
 
 ## Entwickeln
 
